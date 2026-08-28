@@ -211,6 +211,38 @@ const DIVINATION_SECTIONS = [
   ["astrologia","Cartas Astrológicas","wheel","tagged","Configuración / tránsito","ej. Luna en Escorpio, Mercurio retrógrado"],
 ];
 
+const PROTECTION_SECTIONS = [
+  ["resumen","Resumen / Visión general","book","plain"],
+  ["enraizamiento","Menú de Enraizamiento","leaf","plain"],
+  ["escudos","Creador de Escudos","shield","tagged","Materiales / símbolos","ej. sal, obsidiana, pentagrama"],
+  ["mapa-hogar","Mapa de Protección del Hogar","home","plain"],
+  ["limpieza","Ciclo de Limpieza","sun","tagged","Método","ej. salvia, sonido, sal, incienso"],
+  ["aura","Notas de Aura","eye","plain"],
+];
+
+const APOTHECARY_SECTIONS = [
+  ["inventario","Inventario de Boticario","flask","tagged","Cantidad / ubicación","ej. 50g en frasco ámbar, estante 2"],
+  ["experimentos","Registro de Experimentos","note","plain"],
+  ["sustituciones","Mapa de Sustituciones","grid","tagged","Sustituto por","ej. lavanda → manzanilla"],
+  ["prueba-velas","Matriz de Prueba de Velas","candle","tagged","Cera / mecha probada","ej. soja, mecha de madera nº4"],
+  ["piramide-olfativa","Tarjetas de Pirámide Olfativa","leaf","tagged","Salida / corazón / fondo","ej. bergamota / rosa / sándalo"],
+  ["kits-cristales","Índice de Kits de Cristales","gem","tagged","Cristales incluidos","ej. cuarzo, amatista, obsidiana"],
+  ["registro-lotes","Libro de Registro de Lotes","scroll","tagged","Número de lote","ej. Lote 2026-03"],
+  ["caducidad-seguridad","Caducidad y Seguridad","shield","tagged","Fecha de caducidad / precaución","ej. usar antes de 12/2026, evitar en embarazo"],
+  ["costos-reordenes","Hoja de Costos y Reordenes","coin","tagged","Costo / proveedor","ej. importe, dónde reordenar"],
+  ["tiempos-exito","Seguimiento de Tiempos y Éxito","chart","tagged","Tiempo de curado / maduración","ej. 4 semanas, resultado: excelente"],
+];
+
+const SHADOW_SECTIONS = [
+  ["storyboard","Guion Gráfico de la Sombra","scroll","tagged","Escena / disparador","ej. situación, personas, contexto"],
+  ["mood-luna","Registro de Estado de Ánimo y Luna","moon","tagged","Fase lunar","ej. Luna llena, Cuarto menguante"],
+  ["detonante-talisman","De Detonante a Talismán","star","tagged","Detonante → Talismán","ej. crítica → cuarzo rosa"],
+  ["cuidado-corporal","Lista de Cuidado Corporal","leaf","tagged","Práctica","ej. baño ritual, automasaje, estiramiento"],
+  ["gratitud","Líneas de Gratitud","flower","tagged","Hoy agradezco","ej. la luz de la mañana"],
+  ["afirmaciones","Banco de Afirmaciones","sun","tagged","Afirmación","ej. Soy capaz de sanar a mi propio ritmo"],
+  ["reflexion-mensual","Reflexión Mensual","cal","plain"],
+];
+
 function emptyPage(){ return { id:"pg"+Date.now()+Math.random().toString(16).slice(2), title:"", body:"", date: todayKey() }; }
 function emptySigilPage(){ return { id:"sg"+Date.now()+Math.random().toString(16).slice(2), title:"", note:"", image:null, date: todayKey() }; }
 function emptyDreamPage(){ return { id:"dr"+Date.now()+Math.random().toString(16).slice(2), title:"", body:"", date: todayKey(), mood:"", lucid:false, symbols:"" }; }
@@ -224,6 +256,24 @@ function buildDefaultWheelSections(){
 function buildDefaultDivinationSections(){
   const sections = {};
   DIVINATION_SECTIONS.forEach(([id]) => { sections[id] = [emptyPage()]; });
+  return sections;
+}
+
+function buildDefaultProtectionSections(){
+  const sections = {};
+  PROTECTION_SECTIONS.forEach(([id]) => { sections[id] = [emptyPage()]; });
+  return sections;
+}
+
+function buildDefaultApothecarySections(){
+  const sections = {};
+  APOTHECARY_SECTIONS.forEach(([id]) => { sections[id] = [emptyPage()]; });
+  return sections;
+}
+
+function buildDefaultShadowSections(){
+  const sections = {};
+  SHADOW_SECTIONS.forEach(([id]) => { sections[id] = [emptyPage()]; });
   return sections;
 }
 
@@ -247,6 +297,12 @@ function loadState(){
       if (!parsed.dreams) { parsed.dreams = { pages: [emptyDreamPage()] }; }
       // migración: agrega Adivinación y Percepción si el dato guardado es de antes de esta fase
       if (!parsed.divination) { parsed.divination = { sections: buildDefaultDivinationSections() }; }
+      // migración: agrega Protección y Enraizamiento si el dato guardado es de antes de esta fase
+      if (!parsed.protection) { parsed.protection = { sections: buildDefaultProtectionSections() }; }
+      // migración: agrega Boticario si el dato guardado es de antes de esta fase
+      if (!parsed.apothecary) { parsed.apothecary = { sections: buildDefaultApothecarySections() }; }
+      // migración: agrega Sombra y Autocuidado si el dato guardado es de antes de esta fase
+      if (!parsed.shadow) { parsed.shadow = { sections: buildDefaultShadowSections() }; }
       return parsed;
     }
   } catch(e){ console.warn("No se pudo leer localStorage", e); }
@@ -265,6 +321,9 @@ function loadState(){
     sigils: { pages: [emptySigilPage()] },
     dreams: { pages: [emptyDreamPage()] },
     divination: { sections: buildDefaultDivinationSections() },
+    protection: { sections: buildDefaultProtectionSections() },
+    apothecary: { sections: buildDefaultApothecarySections() },
+    shadow: { sections: buildDefaultShadowSections() },
   };
 }
 
@@ -321,6 +380,9 @@ const ICON_PATHS = {
   cards:"M2.5 4 H8 V13 H2.5 Z M5.5 2.5 H11 V11.5 H5.5 Z",
   rune:"M8 14 V6 M8 6 L4 2 M8 6 L12 2",
   eye:"M1.5 8 C3.5 4 6 3 8 3 C10 3 12.5 4 14.5 8 C12.5 12 10 13 8 13 C6 13 3.5 12 1.5 8 Z M8 8 m-2 0 a2 2 0 1 0 4 0 a2 2 0 1 0 -4 0",
+  shield:"M8 2 L13 4 V8 C13 11.5 10.8 13.3 8 14 C5.2 13.3 3 11.5 3 8 V4 Z M6 8 L7.4 9.4 L10.3 6.3",
+  coin:"M8 8 m-5.5 0 a5.5 5.5 0 1 0 11 0 a5.5 5.5 0 1 0 -11 0 M8 5 V11 M6.3 9.7 C6.3 10.6 7 11 8 11 C9.3 11 9.9 10.4 9.9 9.7 C9.9 8 6.1 8.9 6.1 7.2 C6.1 6.5 6.7 6 8 6 C8.8 6 9.5 6.3 9.7 6.9",
+  flower:"M8 8 m-1.6 0 a1.6 1.6 0 1 0 3.2 0 a1.6 1.6 0 1 0 -3.2 0 M8 4 a2 2 0 1 1 0.01 0 M11.5 6 a2 2 0 1 1 -0.01 0 M11.5 10.2 a2 2 0 1 1 -0.01 0 M8 12.2 a2 2 0 1 1 0.01 0 M4.5 10.2 a2 2 0 1 1 0.01 0 M4.5 6 a2 2 0 1 1 0.01 0",
   lotus:"M8 8 m-1.6 0 a1.6 1.6 0 1 0 3.2 0 a1.6 1.6 0 1 0 -3.2 0 M8 4 a2 2 0 1 1 0.01 0 M11.5 6 a2 2 0 1 1 -0.01 0 M11.5 10.2 a2 2 0 1 1 -0.01 0 M8 12.2 a2 2 0 1 1 0.01 0 M4.5 10.2 a2 2 0 1 1 0.01 0 M4.5 6 a2 2 0 1 1 0.01 0",
 };
 function Icon({ name, size=14, color="currentColor", stroke=1.2 }){
@@ -776,6 +838,105 @@ function DivinationSection({ state, setState, sectionId, onBack }){
   );
 }
 
+/* ---------------- Protección y Enraizamiento ---------------- */
+function ProtectionHub({ state, openProtectionSection }){
+  return (
+    <div className="hub-grid">
+      {PROTECTION_SECTIONS.map(([id,label,icon]) => (
+        <div key={id} className="hub-card" onClick={()=>openProtectionSection(id)}>
+          <div className="ic"><Icon name={icon} size={18} stroke={1.1}/></div>
+          <div className="n">{label}</div>
+          <div className="cnt">{state.protection.sections[id].length} página(s)</div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function ProtectionSection({ state, setState, sectionId, onBack }){
+  const info = PROTECTION_SECTIONS.find(s=>s[0]===sectionId);
+  const [,label,,type,tagLabel,tagPlaceholder] = info;
+  function setPages(pages){
+    setState(s => ({...s, protection:{sections:{...s.protection.sections, [sectionId]: pages}}}));
+  }
+  return (
+    <div>
+      <div className="book-toolbar">
+        <div className="crumb" onClick={onBack}><Icon name="arrowL" size={11}/> Protección y Enraizamiento</div>
+      </div>
+      <div style={{fontFamily:"'Cormorant Garamond',serif", fontStyle:"italic", fontSize:20, color:"var(--ink)", marginBottom:14}}>{label}</div>
+      <GrimoireBook pages={state.protection.sections[sectionId]} setPages={setPages} label={sectionId}
+        tagLabel={type==="tagged" ? tagLabel : null} tagPlaceholder={tagPlaceholder}/>
+    </div>
+  );
+}
+
+/* ---------------- Boticario ---------------- */
+function ApothecaryHub({ state, openApothecarySection }){
+  return (
+    <div className="hub-grid">
+      {APOTHECARY_SECTIONS.map(([id,label,icon]) => (
+        <div key={id} className="hub-card" onClick={()=>openApothecarySection(id)}>
+          <div className="ic"><Icon name={icon} size={18} stroke={1.1}/></div>
+          <div className="n">{label}</div>
+          <div className="cnt">{state.apothecary.sections[id].length} página(s)</div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function ApothecarySection({ state, setState, sectionId, onBack }){
+  const info = APOTHECARY_SECTIONS.find(s=>s[0]===sectionId);
+  const [,label,,type,tagLabel,tagPlaceholder] = info;
+  function setPages(pages){
+    setState(s => ({...s, apothecary:{sections:{...s.apothecary.sections, [sectionId]: pages}}}));
+  }
+  return (
+    <div>
+      <div className="book-toolbar">
+        <div className="crumb" onClick={onBack}><Icon name="arrowL" size={11}/> Boticario</div>
+      </div>
+      <div style={{fontFamily:"'Cormorant Garamond',serif", fontStyle:"italic", fontSize:20, color:"var(--ink)", marginBottom:14}}>{label}</div>
+      <GrimoireBook pages={state.apothecary.sections[sectionId]} setPages={setPages} label={sectionId}
+        tagLabel={type==="tagged" ? tagLabel : null} tagPlaceholder={tagPlaceholder}/>
+    </div>
+  );
+}
+
+/* ---------------- Sombra y Autocuidado ---------------- */
+function ShadowHub({ state, openShadowSection }){
+  return (
+    <div className="hub-grid">
+      {SHADOW_SECTIONS.map(([id,label,icon]) => (
+        <div key={id} className="hub-card" onClick={()=>openShadowSection(id)}>
+          <div className="ic"><Icon name={icon} size={18} stroke={1.1}/></div>
+          <div className="n">{label}</div>
+          <div className="cnt">{state.shadow.sections[id].length} página(s)</div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function ShadowSection({ state, setState, sectionId, onBack }){
+  const info = SHADOW_SECTIONS.find(s=>s[0]===sectionId);
+  const [,label,,type,tagLabel,tagPlaceholder] = info;
+  function setPages(pages){
+    setState(s => ({...s, shadow:{sections:{...s.shadow.sections, [sectionId]: pages}}}));
+  }
+  return (
+    <div>
+      <div className="book-toolbar">
+        <div className="crumb" onClick={onBack}><Icon name="arrowL" size={11}/> Sombra y Autocuidado</div>
+      </div>
+      <div style={{fontFamily:"'Cormorant Garamond',serif", fontStyle:"italic", fontSize:20, color:"var(--ink)", marginBottom:14}}>{label}</div>
+      <GrimoireBook pages={state.shadow.sections[sectionId]} setPages={setPages} label={sectionId}
+        tagLabel={type==="tagged" ? tagLabel : null} tagPlaceholder={tagPlaceholder}/>
+    </div>
+  );
+}
+
 /* ---------------- Inicio ---------------- */
 function nextSabbat(){
   const today = new Date();
@@ -850,6 +1011,18 @@ function Home({ state, go }){
           <h3><span className="t"><Icon name="eye" color="var(--gold)"/>Adivinación y Percepción</span></h3>
           <p style={{fontSize:12, color:"var(--ink2)", lineHeight:1.6}}>Tarot, runas, escudriñamiento, meditación y cartas astrológicas.</p>
         </div>
+        <div className="card" style={{cursor:"pointer"}} onClick={()=>go("protection")}>
+          <h3><span className="t"><Icon name="shield" color="var(--gold)"/>Protección y Enraizamiento</span></h3>
+          <p style={{fontSize:12, color:"var(--ink2)", lineHeight:1.6}}>Enraizamiento, escudos, protección del hogar, limpieza y aura.</p>
+        </div>
+        <div className="card" style={{cursor:"pointer"}} onClick={()=>go("apothecary")}>
+          <h3><span className="t"><Icon name="flask" color="var(--gold)"/>Boticario</span></h3>
+          <p style={{fontSize:12, color:"var(--ink2)", lineHeight:1.6}}>Inventario, experimentos, sustituciones, velas, kits y más.</p>
+        </div>
+        <div className="card" style={{cursor:"pointer"}} onClick={()=>go("shadow")}>
+          <h3><span className="t"><Icon name="flower" color="var(--gold)"/>Sombra y Autocuidado</span></h3>
+          <p style={{fontSize:12, color:"var(--ink2)", lineHeight:1.6}}>Trabajo de sombra, gratitud, afirmaciones y reflexión mensual.</p>
+        </div>
       </div>
     </div>
   );
@@ -863,10 +1036,12 @@ const TOP_SECTIONS = [
   {id:"wheel", label:"Rueda del Año", icon:"wheel"},
   {id:"dreams", label:"Diario de Sueños", icon:"cloud"},
   {id:"divination", label:"Adivinación y Percepción", icon:"eye"},
+  {id:"protection", label:"Protección y Enraizamiento", icon:"shield"},
+  {id:"apothecary", label:"Boticario", icon:"flask"},
+  {id:"shadow", label:"Sombra y Autocuidado", icon:"flower"},
 ];
 const SOON_SECTIONS = [
-  "Protección y Enraizamiento","Boticario",
-  "Sombra y Autocuidado","Manifestación y Visión","Productividad","Planificador Anual",
+  "Manifestación y Visión","Productividad","Planificador Anual",
   "Gestión de Vida","Finanzas",
 ];
 
@@ -877,6 +1052,9 @@ function App(){
   const [moonOpen, setMoonOpen] = useState(null);
   const [wheelOpen, setWheelOpen] = useState(null);
   const [divinationOpen, setDivinationOpen] = useState(null);
+  const [protectionOpen, setProtectionOpen] = useState(null);
+  const [apothecaryOpen, setApothecaryOpen] = useState(null);
+  const [shadowOpen, setShadowOpen] = useState(null);
 
   useEffect(() => {
     if ("serviceWorker" in navigator && location.protocol.startsWith("http")) {
@@ -890,6 +1068,9 @@ function App(){
     setMoonOpen(null);
     setWheelOpen(null);
     setDivinationOpen(null);
+    setProtectionOpen(null);
+    setApothecaryOpen(null);
+    setShadowOpen(null);
   }
 
   const activeLabel = TOP_SECTIONS.find(s=>s.id===section)?.label || "";
@@ -901,7 +1082,7 @@ function App(){
           <Icon name="star" size={16} color="var(--gold)"/>
           <div className="brand">Pagan Life Planner</div>
         </div>
-        <div className="tag">Fase 4 · grimorio</div>
+        <div className="tag">Fase 7 · grimorio</div>
         {TOP_SECTIONS.map(s => (
           <div key={s.id} className={"item"+(section===s.id?" on":"")} onClick={()=>go(s.id)}>
             <Icon name={s.icon} size={13}/>{s.label}
@@ -933,6 +1114,15 @@ function App(){
 
         {section==="divination" && !divinationOpen && <DivinationHub state={state} openDivinationSection={setDivinationOpen}/>}
         {section==="divination" && divinationOpen && <DivinationSection state={state} setState={setState} sectionId={divinationOpen} onBack={()=>setDivinationOpen(null)}/>}
+
+        {section==="protection" && !protectionOpen && <ProtectionHub state={state} openProtectionSection={setProtectionOpen}/>}
+        {section==="protection" && protectionOpen && <ProtectionSection state={state} setState={setState} sectionId={protectionOpen} onBack={()=>setProtectionOpen(null)}/>}
+
+        {section==="apothecary" && !apothecaryOpen && <ApothecaryHub state={state} openApothecarySection={setApothecaryOpen}/>}
+        {section==="apothecary" && apothecaryOpen && <ApothecarySection state={state} setState={setState} sectionId={apothecaryOpen} onBack={()=>setApothecaryOpen(null)}/>}
+
+        {section==="shadow" && !shadowOpen && <ShadowHub state={state} openShadowSection={setShadowOpen}/>}
+        {section==="shadow" && shadowOpen && <ShadowSection state={state} setState={setState} sectionId={shadowOpen} onBack={()=>setShadowOpen(null)}/>}
       </div>
 
       <div className="app-bottom-nav">
