@@ -129,6 +129,17 @@
   .sigil-toolbar { display:flex; justify-content:space-between; align-items:center; margin-top:8px; }
   .sigil-hint { font-family:'JetBrains Mono',monospace; font-size:8.5px; color:var(--ink3); letter-spacing:.03em; }
 
+  .dream-fields { display:flex; flex-wrap:wrap; gap:8px; align-items:center; margin-bottom:16px; }
+  .dream-mood { font-family:'JetBrains Mono',monospace; font-size:9.5px; letter-spacing:.04em; text-transform:uppercase; padding:6px 12px; border-radius:14px; border:1px solid var(--line); color:var(--ink2); cursor:pointer; }
+  .dream-mood.on { background:var(--accent); color:#211B15; border-color:var(--accent); }
+  .dream-lucid { display:flex; align-items:center; gap:7px; font-family:'JetBrains Mono',monospace; font-size:9.5px; letter-spacing:.04em; text-transform:uppercase; padding:6px 12px; border-radius:14px; border:1px solid var(--line); color:var(--ink2); cursor:pointer; }
+  .dream-lucid.on { background:var(--gold); color:#211B15; border-color:var(--gold); }
+  .dream-symbols { width:100%; margin-bottom:14px; }
+  .dream-symbols label { font-family:'JetBrains Mono',monospace; font-size:8px; letter-spacing:.07em; text-transform:uppercase; color:var(--ink3); display:block; margin-bottom:5px; }
+  .dream-symbols input { width:100%; background:transparent; border:none; border-bottom:1px solid var(--line); color:var(--ink); font-family:'Manrope',sans-serif; font-size:12.5px; padding-bottom:6px; }
+  .dream-symbols input:focus { outline:none; border-bottom-color:var(--accent); }
+  .dream-symbols input::placeholder { color:var(--ink3); font-style:italic; }
+
   .app-bottom-nav { display:none; }
   @media (max-width: 860px) {
     .app-nav { display:none; }
@@ -188,8 +199,11 @@ const WHEEL_SECTIONS = [
   ["samhain","Samhain","31 oct","Año nuevo pagano"],
 ];
 
+const DREAM_MOODS = ["Paz","Alegría","Confusión","Miedo","Tristeza","Neutral"];
+
 function emptyPage(){ return { id:"pg"+Date.now()+Math.random().toString(16).slice(2), title:"", body:"", date: todayKey() }; }
 function emptySigilPage(){ return { id:"sg"+Date.now()+Math.random().toString(16).slice(2), title:"", note:"", image:null, date: todayKey() }; }
+function emptyDreamPage(){ return { id:"dr"+Date.now()+Math.random().toString(16).slice(2), title:"", body:"", date: todayKey(), mood:"", lucid:false, symbols:"" }; }
 
 function buildDefaultWheelSections(){
   const wheelSections = {};
@@ -213,6 +227,8 @@ function loadState(){
         parsed.sigils = { pages: migrated.length ? migrated : [emptySigilPage()] };
         if (parsed.book && parsed.book.sections) delete parsed.book.sections.sigilos;
       }
+      // migración: agrega el Diario de Sueños si el dato guardado es de antes de esta fase
+      if (!parsed.dreams) { parsed.dreams = { pages: [emptyDreamPage()] }; }
       return parsed;
     }
   } catch(e){ console.warn("No se pudo leer localStorage", e); }
@@ -229,6 +245,7 @@ function loadState(){
     moon: { sections: moonSections },
     wheel: { sections: buildDefaultWheelSections() },
     sigils: { pages: [emptySigilPage()] },
+    dreams: { pages: [emptyDreamPage()] },
   };
 }
 
@@ -280,6 +297,8 @@ const ICON_PATHS = {
   note:"M3 2.5 H13 V13.5 H3 Z M5 5.5 H11 M5 8 H11 M5 10.5 H9",
   cal:"M2.5 3.5 H13.5 V13 H2.5 Z M2.5 6 H13.5 M5 2 V4.5 M11 2 V4.5",
   wheel:"M8 8 m-6 0 a6 6 0 1 0 12 0 a6 6 0 1 0 -12 0 M8 2 V4 M8 12 V14 M2 8 H4 M12 8 H14 M3.8 3.8 L5.2 5.2 M10.8 10.8 L12.2 12.2 M3.8 12.2 L5.2 10.8 M10.8 5.2 L12.2 3.8 M8 8 m-1.6 0 a1.6 1.6 0 1 0 3.2 0 a1.6 1.6 0 1 0 -3.2 0",
+  cloud:"M4.8 11.5 A3 3 0 0 1 5.2 5.6 A3.8 3.8 0 0 1 12.6 6.4 A2.6 2.6 0 0 1 12 11.5 Z",
+  check:"M2.5 8.3 L6 11.8 L13.5 4.2",
 };
 function Icon({ name, size=14, color="currentColor", stroke=1.2 }){
   return <svg width={size} height={size} viewBox="0 0 16 16" fill="none"><path d={ICON_PATHS[name]||ICON_PATHS.star} stroke={color} strokeWidth={stroke} strokeLinecap="round" strokeLinejoin="round"/></svg>;
@@ -452,6 +471,56 @@ function SigilSection({ state, setState, onBack }){
       </div>
       <div style={{fontFamily:"'Cormorant Garamond',serif", fontStyle:"italic", fontSize:20, color:"var(--ink)", marginBottom:14}}>Sigilos</div>
       <SigilBook pages={state.sigils.pages} setPages={setPages}/>
+    </div>
+  );
+}
+
+/* ---------------- Diario de Sueños ---------------- */
+function DreamBook({ pages, setPages }){
+  const [idx, setIdx] = useState(Math.max(0, pages.length-1));
+  const page = pages[idx] || emptyDreamPage();
+
+  function update(patch){ setPages(pages.map((p,i)=> i!==idx ? p : {...p, ...patch})); }
+  function addPage(){ setPages([...pages, emptyDreamPage()]); setIdx(pages.length); }
+  function deletePage(){
+    if (pages.length<=1) return;
+    const np = pages.filter((_,i)=>i!==idx);
+    setPages(np);
+    setIdx(Math.max(0, idx-1));
+  }
+
+  return (
+    <div>
+      <div className="book-page">
+        <div className="book-date">{page.date}</div>
+        <input className="book-title-input" placeholder="Título del sueño…" value={page.title}
+          onChange={e=>update({title:e.target.value})}/>
+
+        <div className="dream-fields">
+          {DREAM_MOODS.map(m => (
+            <span key={m} className={"dream-mood"+(page.mood===m?" on":"")} onClick={()=>update({mood: page.mood===m ? "" : m})}>{m}</span>
+          ))}
+          <span className={"dream-lucid"+(page.lucid?" on":"")} onClick={()=>update({lucid:!page.lucid})}>
+            <Icon name="check" size={10}/> Sueño lúcido
+          </span>
+        </div>
+
+        <div className="dream-symbols">
+          <label>Símbolos / palabras clave</label>
+          <input placeholder="ej. agua, vuelo, casa de la infancia…" value={page.symbols}
+            onChange={e=>update({symbols:e.target.value})}/>
+        </div>
+
+        <textarea className="book-body-area" placeholder="Describe el sueño…" value={page.body}
+          onChange={e=>update({body:e.target.value})}/>
+        <div className="book-page-num">Página {idx+1} de {pages.length}</div>
+      </div>
+      <div className="book-controls">
+        <button className="btn sm" disabled={idx===0} onClick={()=>setIdx(idx-1)}><Icon name="arrowL" size={12}/></button>
+        <button className="btn sm danger" disabled={pages.length<=1} onClick={deletePage}>Eliminar página</button>
+        <button className="btn primary sm" onClick={addPage}><Icon name="plus" size={11}/> Nuevo sueño</button>
+        <button className="btn sm" disabled={idx>=pages.length-1} onClick={()=>setIdx(idx+1)}><Icon name="arrowR" size={12}/></button>
+      </div>
     </div>
   );
 }
@@ -698,7 +767,7 @@ function Home({ state, go }){
         <div className="stat"><div className="v">{BOOK_SECTIONS.length}</div><div className="l">Secciones</div></div>
         <div className="stat"><div className="v">8</div><div className="l">Sabbats</div></div>
       </div>
-      <div style={{display:"grid", gridTemplateColumns:"1fr 1fr 1fr", gap:16, marginTop:16}}>
+      <div style={{display:"grid", gridTemplateColumns:"1fr 1fr", gap:16, marginTop:16}}>
         <div className="card" style={{cursor:"pointer"}} onClick={()=>go("book")}>
           <h3><span className="t"><Icon name="book" color="var(--gold)"/>Libro de las Sombras</span></h3>
           <p style={{fontSize:12, color:"var(--ink2)", lineHeight:1.6}}>Hechizos, hierbas, cristales, sigilos y más — tu grimorio personal.</p>
@@ -711,6 +780,10 @@ function Home({ state, go }){
           <h3><span className="t"><Icon name="wheel" color="var(--gold)"/>Rueda del Año</span></h3>
           <p style={{fontSize:12, color:"var(--ink2)", lineHeight:1.6}}>Los ocho sabbats: Yule, Imbolc, Ostara, Beltane, Litha, Lammas, Mabon, Samhain.</p>
         </div>
+        <div className="card" style={{cursor:"pointer"}} onClick={()=>go("dreams")}>
+          <h3><span className="t"><Icon name="cloud" color="var(--gold)"/>Diario de Sueños</span></h3>
+          <p style={{fontSize:12, color:"var(--ink2)", lineHeight:1.6}}>Registra tus sueños, símbolos recurrentes y sueños lúcidos.</p>
+        </div>
       </div>
     </div>
   );
@@ -722,6 +795,7 @@ const TOP_SECTIONS = [
   {id:"book", label:"Libro de las Sombras", icon:"book"},
   {id:"moon", label:"La Luna", icon:"moon"},
   {id:"wheel", label:"Rueda del Año", icon:"wheel"},
+  {id:"dreams", label:"Diario de Sueños", icon:"cloud"},
 ];
 const SOON_SECTIONS = [
   "Adivinación y Percepción","Protección y Enraizamiento","Boticario",
@@ -758,7 +832,7 @@ function App(){
           <Icon name="star" size={16} color="var(--gold)"/>
           <div className="brand">Pagan Life Planner</div>
         </div>
-        <div className="tag">Fase 2 · grimorio</div>
+        <div className="tag">Fase 3 · grimorio</div>
         {TOP_SECTIONS.map(s => (
           <div key={s.id} className={"item"+(section===s.id?" on":"")} onClick={()=>go(s.id)}>
             <Icon name={s.icon} size={13}/>{s.label}
@@ -785,6 +859,8 @@ function App(){
 
         {section==="wheel" && !wheelOpen && <WheelHub state={state} setState={setState} openWheelSection={setWheelOpen}/>}
         {section==="wheel" && wheelOpen && <WheelSection state={state} setState={setState} sectionId={wheelOpen} onBack={()=>setWheelOpen(null)}/>}
+
+        {section==="dreams" && <DreamBook pages={state.dreams.pages} setPages={(pages)=>setState(s=>({...s, dreams:{pages}}))}/>}
       </div>
 
       <div className="app-bottom-nav">
