@@ -125,6 +125,10 @@
   .wheel-list .r:last-child { border-bottom:none; }
   .wheel-list .r .meta { font-family:'JetBrains Mono',monospace; font-size:9px; color:var(--ink3); }
 
+  .sigil-canvas { width:100%; touch-action:none; border-radius:10px; border:1px solid var(--line); background:var(--bg2); display:block; cursor:crosshair; }
+  .sigil-toolbar { display:flex; justify-content:space-between; align-items:center; margin-top:8px; }
+  .sigil-hint { font-family:'JetBrains Mono',monospace; font-size:8.5px; color:var(--ink3); letter-spacing:.03em; }
+
   .app-bottom-nav { display:none; }
   @media (max-width: 860px) {
     .app-nav { display:none; }
@@ -141,7 +145,7 @@
 <div id="root"></div>
 
 <script type="text/babel" data-presets="react">
-const { useState, useEffect, useMemo } = React;
+const { useState, useEffect, useMemo, useRef } = React;
 
 /* ---------------- persistencia ---------------- */
 const STORAGE_KEY = "pagan-life-planner-data-v1";
@@ -185,6 +189,7 @@ const WHEEL_SECTIONS = [
 ];
 
 function emptyPage(){ return { id:"pg"+Date.now()+Math.random().toString(16).slice(2), title:"", body:"", date: todayKey() }; }
+function emptySigilPage(){ return { id:"sg"+Date.now()+Math.random().toString(16).slice(2), title:"", note:"", image:null, date: todayKey() }; }
 
 function buildDefaultWheelSections(){
   const wheelSections = {};
@@ -199,12 +204,21 @@ function loadState(){
       const parsed = JSON.parse(raw);
       // migración: agrega la Rueda del Año si el dato guardado es de antes de esta fase
       if (!parsed.wheel) { parsed.wheel = { sections: buildDefaultWheelSections() }; }
+      // migración: Sigilos pasa de páginas de texto a páginas con dibujo propio
+      if (!parsed.sigils) {
+        const oldPages = (parsed.book && parsed.book.sections && parsed.book.sections.sigilos) || [];
+        const migrated = oldPages
+          .filter(p => p.title || p.body)
+          .map(p => ({ id:p.id, title:p.title, note:p.body, image:null, date:p.date }));
+        parsed.sigils = { pages: migrated.length ? migrated : [emptySigilPage()] };
+        if (parsed.book && parsed.book.sections) delete parsed.book.sections.sigilos;
+      }
       return parsed;
     }
   } catch(e){ console.warn("No se pudo leer localStorage", e); }
 
   const bookSections = {};
-  BOOK_SECTIONS.forEach(([id]) => { bookSections[id] = [emptyPage()]; });
+  BOOK_SECTIONS.forEach(([id]) => { if (id!=="sigilos") bookSections[id] = [emptyPage()]; });
 
   const moonSections = {};
   MOON_PHASE_ORDER.forEach(id => { moonSections[id] = [emptyPage()]; });
@@ -214,6 +228,7 @@ function loadState(){
     book: { sections: bookSections },
     moon: { sections: moonSections },
     wheel: { sections: buildDefaultWheelSections() },
+    sigils: { pages: [emptySigilPage()] },
   };
 }
 
@@ -330,17 +345,131 @@ function GrimoireBook({ pages, setPages, label }){
   );
 }
 
+/* ---------------- Sigilos: lienzo de dibujo ---------------- */
+function SigilCanvas({ image, onSave }){
+  const canvasRef = useRef(null);
+  const drawing = useRef(false);
+  const lastPos = useRef(null);
+  const CW = 600, CH = 380;
+
+  function paintBackground(ctx){
+    ctx.fillStyle = "#1E1912";
+    ctx.fillRect(0,0,CW,CH);
+  }
+
+  useEffect(() => {
+    const ctx = canvasRef.current.getContext("2d");
+    paintBackground(ctx);
+    if (image) {
+      const img = new Image();
+      img.onload = () => ctx.drawImage(img, 0, 0, CW, CH);
+      img.src = image;
+    }
+  }, [image===null]); // solo recarga si se limpió; los trazos en curso no deben reiniciar el lienzo
+
+  function getPos(e){
+    const canvas = canvasRef.current;
+    const rect = canvas.getBoundingClientRect();
+    const t = e.touches && e.touches[0];
+    const clientX = t ? t.clientX : e.clientX;
+    const clientY = t ? t.clientY : e.clientY;
+    return { x:(clientX-rect.left)*(CW/rect.width), y:(clientY-rect.top)*(CH/rect.height) };
+  }
+  function start(e){ e.preventDefault(); drawing.current = true; lastPos.current = getPos(e); }
+  function move(e){
+    if (!drawing.current) return;
+    e.preventDefault();
+    const pos = getPos(e);
+    const ctx = canvasRef.current.getContext("2d");
+    ctx.strokeStyle = "#D8CBAE"; ctx.lineWidth = 3; ctx.lineCap = "round"; ctx.lineJoin = "round";
+    ctx.beginPath(); ctx.moveTo(lastPos.current.x, lastPos.current.y); ctx.lineTo(pos.x, pos.y); ctx.stroke();
+    lastPos.current = pos;
+  }
+  function end(){
+    if (!drawing.current) return;
+    drawing.current = false;
+    onSave(canvasRef.current.toDataURL("image/png"));
+  }
+  function clearCanvas(){
+    const ctx = canvasRef.current.getContext("2d");
+    paintBackground(ctx);
+    onSave(null);
+  }
+
+  return (
+    <div>
+      <canvas ref={canvasRef} width={CW} height={CH} className="sigil-canvas"
+        onMouseDown={start} onMouseMove={move} onMouseUp={end} onMouseLeave={end}
+        onTouchStart={start} onTouchMove={move} onTouchEnd={end}/>
+      <div className="sigil-toolbar">
+        <span className="sigil-hint">Dibuja con el dedo — se guarda solo</span>
+        <button className="btn sm danger" onClick={clearCanvas}>Borrar dibujo</button>
+      </div>
+    </div>
+  );
+}
+
+function SigilBook({ pages, setPages }){
+  const [idx, setIdx] = useState(Math.max(0, pages.length-1));
+  const page = pages[idx] || emptySigilPage();
+
+  function update(patch){ setPages(pages.map((p,i)=> i!==idx ? p : {...p, ...patch})); }
+  function addPage(){ setPages([...pages, emptySigilPage()]); setIdx(pages.length); }
+  function deletePage(){
+    if (pages.length<=1) return;
+    const np = pages.filter((_,i)=>i!==idx);
+    setPages(np);
+    setIdx(Math.max(0, idx-1));
+  }
+
+  return (
+    <div>
+      <div className="book-page">
+        <div className="book-date">{page.date}</div>
+        <input className="book-title-input" placeholder="Nombre o intención del sigilo…" value={page.title}
+          onChange={e=>update({title:e.target.value})}/>
+        <SigilCanvas image={page.image} onSave={(image)=>update({image})}/>
+        <textarea className="book-body-area" style={{minHeight:80, marginTop:14}} placeholder="Notas: activación, carga, significado…"
+          value={page.note} onChange={e=>update({note:e.target.value})}/>
+        <div className="book-page-num">Página {idx+1} de {pages.length}</div>
+      </div>
+      <div className="book-controls">
+        <button className="btn sm" disabled={idx===0} onClick={()=>setIdx(idx-1)}><Icon name="arrowL" size={12}/></button>
+        <button className="btn sm danger" disabled={pages.length<=1} onClick={deletePage}>Eliminar página</button>
+        <button className="btn primary sm" onClick={addPage}><Icon name="plus" size={11}/> Nuevo sigilo</button>
+        <button className="btn sm" disabled={idx>=pages.length-1} onClick={()=>setIdx(idx+1)}><Icon name="arrowR" size={12}/></button>
+      </div>
+    </div>
+  );
+}
+
+function SigilSection({ state, setState, onBack }){
+  function setPages(pages){ setState(s => ({...s, sigils:{pages}})); }
+  return (
+    <div>
+      <div className="book-toolbar">
+        <div className="crumb" onClick={onBack}><Icon name="arrowL" size={11}/> Libro de las Sombras</div>
+      </div>
+      <div style={{fontFamily:"'Cormorant Garamond',serif", fontStyle:"italic", fontSize:20, color:"var(--ink)", marginBottom:14}}>Sigilos</div>
+      <SigilBook pages={state.sigils.pages} setPages={setPages}/>
+    </div>
+  );
+}
+
 /* ---------------- Libro de las Sombras ---------------- */
 function BookHub({ state, setState, openSection }){
   return (
     <div className="hub-grid">
-      {BOOK_SECTIONS.map(([id,label,icon]) => (
-        <div key={id} className="hub-card" onClick={()=>openSection(id)}>
-          <div className="ic"><Icon name={icon} size={18} stroke={1.1}/></div>
-          <div className="n">{label}</div>
-          <div className="cnt">{state.book.sections[id].length} página(s)</div>
-        </div>
-      ))}
+      {BOOK_SECTIONS.map(([id,label,icon]) => {
+        const count = id==="sigilos" ? state.sigils.pages.length : state.book.sections[id].length;
+        return (
+          <div key={id} className="hub-card" onClick={()=>openSection(id)}>
+            <div className="ic"><Icon name={icon} size={18} stroke={1.1}/></div>
+            <div className="n">{label}</div>
+            <div className="cnt">{count} página(s)</div>
+          </div>
+        );
+      })}
     </div>
   );
 }
@@ -648,7 +777,8 @@ function App(){
         {section==="home" && <Home state={state} go={go}/>}
 
         {section==="book" && !bookOpen && <BookHub state={state} setState={setState} openSection={setBookOpen}/>}
-        {section==="book" && bookOpen && <BookSection state={state} setState={setState} sectionId={bookOpen} onBack={()=>setBookOpen(null)}/>}
+        {section==="book" && bookOpen==="sigilos" && <SigilSection state={state} setState={setState} onBack={()=>setBookOpen(null)}/>}
+        {section==="book" && bookOpen && bookOpen!=="sigilos" && <BookSection state={state} setState={setState} sectionId={bookOpen} onBack={()=>setBookOpen(null)}/>}
 
         {section==="moon" && !moonOpen && <MoonHub state={state} setState={setState} openMoonSection={setMoonOpen}/>}
         {section==="moon" && moonOpen && <MoonSection state={state} setState={setState} sectionId={moonOpen} onBack={()=>setMoonOpen(null)}/>}
