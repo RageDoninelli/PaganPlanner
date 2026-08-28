@@ -1,0 +1,537 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Pagan Life Planner</title>
+<meta name="description" content="Tu grimorio digital: Libro de las Sombras, ciclos lunares y más.">
+<meta name="theme-color" content="#161310">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,500&family=Manrope:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://unpkg.com/react@18/umd/react.development.js" crossorigin></script>
+<script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js" crossorigin></script>
+<script src="https://unpkg.com/@babel/standalone@7.24.7/babel.min.js" crossorigin></script>
+<style>
+  * { box-sizing:border-box; margin:0; padding:0; }
+  html,body { background:#161310; font-family:'Manrope',sans-serif; color:#EDE4D2; }
+  #root { min-height:100vh; }
+
+  :root {
+    --bg:#161310; --bg2:#1E1912; --card:#211B15; --line:#3A332A; --lineSoft:#2A251E;
+    --ink:#EDE4D2; --ink2:#C4B9A5; --ink3:#8C8275; --gold:#C9BBA0; --goldDeep:#8A7B62;
+    --accent:#B6A8C4; /* toque lavanda mística para detalles */
+  }
+
+  .app-shell { display:flex; min-height:100vh; }
+
+  .app-nav { width:220px; flex-shrink:0; background:var(--bg2); border-right:1px solid var(--line); padding:26px 16px; position:sticky; top:0; height:100vh; overflow-y:auto; }
+  .app-nav .brand-row { display:flex; align-items:center; gap:10px; margin-bottom:4px; }
+  .app-nav .brand { font-family:'Cormorant Garamond',serif; font-style:italic; font-weight:500; font-size:18px; color:var(--ink); }
+  .app-nav .tag { font-family:'JetBrains Mono',monospace; font-size:8.5px; letter-spacing:.08em; text-transform:uppercase; color:var(--ink3); margin-bottom:22px; }
+  .app-nav .group-label { font-family:'JetBrains Mono',monospace; font-size:8px; letter-spacing:.1em; text-transform:uppercase; color:var(--goldDeep); margin:16px 0 6px 12px; }
+  .app-nav .item { display:flex; align-items:center; gap:10px; padding:9px 12px; border-radius:8px; cursor:pointer; font-size:12px; font-weight:500; color:var(--ink2); margin-bottom:2px; }
+  .app-nav .item:hover { background:rgba(255,255,255,.03); }
+  .app-nav .item.on { background:rgba(182,168,196,.15); color:var(--ink); }
+  .app-nav .item.soon { color:var(--ink3); cursor:default; opacity:.55; }
+  .app-nav .item.soon:hover { background:none; }
+  .app-nav .sub { padding-left:14px; }
+
+  .app-main { flex:1; min-width:0; padding:26px 34px 90px; max-width:900px; margin:0 auto; width:100%; }
+  .app-topbar { display:flex; justify-content:space-between; align-items:baseline; margin-bottom:22px; flex-wrap:wrap; gap:8px; }
+  .app-topbar h1 { font-family:'Cormorant Garamond',serif; font-style:italic; font-weight:500; font-size:26px; color:var(--ink); }
+  .app-topbar .date { font-family:'JetBrains Mono',monospace; font-size:10px; color:var(--ink3); letter-spacing:.05em; text-transform:uppercase; }
+
+  .card { background:var(--card); border:1px solid var(--line); border-radius:12px; padding:20px 22px; margin-bottom:16px; }
+  .card h3 { font-family:'Manrope',sans-serif; font-size:10.5px; font-weight:700; letter-spacing:.08em; text-transform:uppercase; color:var(--gold); margin-bottom:14px; display:flex; align-items:center; gap:7px; justify-content:space-between; }
+  .card h3 .t { display:flex; align-items:center; gap:7px; }
+
+  .hub-grid { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+  .hub-card { border:1px solid var(--line); border-radius:10px; padding:16px; cursor:pointer; transition:.15s; background:var(--bg2); }
+  .hub-card:hover { border-color:var(--accent); background:rgba(182,168,196,.06); }
+  .hub-card .ic { color:var(--gold); margin-bottom:10px; }
+  .hub-card .n { font-family:'Cormorant Garamond',serif; font-style:italic; font-size:16px; color:var(--ink); }
+  .hub-card .d { font-family:'JetBrains Mono',monospace; font-size:8.5px; color:var(--ink3); margin-top:5px; letter-spacing:.04em; }
+  .hub-card .cnt { font-family:'JetBrains Mono',monospace; font-size:9px; color:var(--goldDeep); margin-top:8px; }
+
+  .book-toolbar { display:flex; align-items:center; justify-content:space-between; margin-bottom:14px; }
+  .book-toolbar .crumb { display:flex; align-items:center; gap:6px; font-family:'JetBrains Mono',monospace; font-size:9.5px; letter-spacing:.06em; text-transform:uppercase; color:var(--ink3); cursor:pointer; }
+  .book-toolbar .crumb:hover { color:var(--accent); }
+  .book-page { background:var(--card); border:1px solid var(--line); border-radius:14px; padding:26px 28px; min-height:420px; position:relative; }
+  .book-page-num { position:absolute; bottom:14px; right:20px; font-family:'JetBrains Mono',monospace; font-size:9.5px; color:var(--ink3); letter-spacing:.05em; }
+  .book-title-input { width:100%; font-family:'Cormorant Garamond',serif; font-style:italic; font-size:24px; color:var(--ink); background:transparent; border:none; border-bottom:1px solid var(--line); padding-bottom:10px; margin-bottom:16px; }
+  .book-title-input:focus { outline:none; border-bottom-color:var(--accent); }
+  .book-body-area { width:100%; min-height:280px; background:transparent; border:none; color:var(--ink2); font-family:'Manrope',sans-serif; font-size:13.5px; line-height:1.8; resize:vertical; }
+  .book-body-area:focus { outline:none; }
+  .book-body-area::placeholder { color:var(--ink3); font-style:italic; }
+  .book-date { font-family:'JetBrains Mono',monospace; font-size:9px; color:var(--ink3); letter-spacing:.05em; margin-bottom:8px; }
+
+  .book-controls { display:flex; align-items:center; justify-content:center; gap:10px; margin-top:16px; }
+  .book-controls .btn { min-width:38px; }
+
+  .btn { font-family:'Manrope',sans-serif; font-size:11.5px; font-weight:600; letter-spacing:.02em; padding:9px 15px; border-radius:8px; border:1px solid var(--line); background:var(--bg2); color:var(--ink); cursor:pointer; }
+  .btn:hover { border-color:var(--accent); }
+  .btn.primary { background:var(--accent); color:#211B15; border-color:var(--accent); }
+  .btn.danger { color:#C99577; border-color:var(--line); }
+  .btn.sm { padding:6px 10px; font-size:10.5px; }
+  .btn:disabled { opacity:.35; cursor:default; }
+
+  .grid-4 { display:grid; grid-template-columns:repeat(4,1fr); gap:12px; }
+  .stat { text-align:center; padding:14px 8px; background:var(--bg2); border-radius:10px; border:1px solid var(--lineSoft); }
+  .stat .v { font-family:'JetBrains Mono',monospace; font-size:18px; color:var(--gold); }
+  .stat .l { font-family:'JetBrains Mono',monospace; font-size:7.5px; letter-spacing:.06em; text-transform:uppercase; color:var(--ink3); margin-top:3px; }
+
+  .moon-today { display:flex; align-items:center; gap:16px; }
+  .moon-today .name { font-family:'Cormorant Garamond',serif; font-style:italic; font-size:20px; color:var(--ink); }
+  .moon-today .sub { font-family:'JetBrains Mono',monospace; font-size:9.5px; color:var(--ink3); margin-top:4px; }
+
+  .cal-grid-m { display:grid; grid-template-columns:repeat(7,1fr); gap:5px; margin-top:10px; }
+  .cal-head-m { font-family:'JetBrains Mono',monospace; font-size:8px; letter-spacing:.06em; text-transform:uppercase; color:var(--ink3); text-align:center; }
+  .cal-day-m { aspect-ratio:1; border-radius:8px; border:1px solid var(--lineSoft); display:flex; flex-direction:column; align-items:center; justify-content:center; gap:3px; cursor:pointer; background:var(--bg2); }
+  .cal-day-m:hover { border-color:var(--accent); }
+  .cal-day-m.today { border-color:var(--gold); }
+  .cal-day-m .n { font-family:'JetBrains Mono',monospace; font-size:9px; color:var(--ink3); }
+  .cal-day-m.empty { visibility:hidden; }
+
+  .moon-phase-strip { display:flex; gap:6px; overflow-x:auto; padding-bottom:6px; margin-top:14px; }
+  .moon-phase-strip .p { flex-shrink:0; width:70px; text-align:center; padding:10px 4px; border-radius:9px; border:1px solid var(--lineSoft); cursor:pointer; }
+  .moon-phase-strip .p:hover { border-color:var(--accent); }
+  .moon-phase-strip .p .lbl { font-family:'JetBrains Mono',monospace; font-size:7px; letter-spacing:.03em; text-transform:uppercase; color:var(--ink3); margin-top:6px; line-height:1.3; }
+
+  .moon-links { display:flex; flex-direction:column; gap:0; margin-top:6px; }
+  .moon-links .r { display:flex; align-items:center; justify-content:space-between; padding:9px 0; border-bottom:1px solid var(--lineSoft); font-size:12px; color:var(--ink2); cursor:pointer; }
+  .moon-links .r:hover { color:var(--ink); }
+  .moon-links .r:last-child { border-bottom:none; }
+
+  .modal-bg { position:fixed; inset:0; background:rgba(0,0,0,.5); display:flex; align-items:center; justify-content:center; z-index:30; padding:20px; }
+  .modal { background:var(--card); border:1px solid var(--line); border-radius:14px; padding:24px; max-width:340px; width:100%; text-align:center; }
+  .modal .name { font-family:'Cormorant Garamond',serif; font-style:italic; font-size:20px; margin:10px 0 4px; }
+  .modal .sub { font-family:'JetBrains Mono',monospace; font-size:9.5px; color:var(--ink3); margin-bottom:18px; }
+
+  .app-bottom-nav { display:none; }
+  @media (max-width: 860px) {
+    .app-nav { display:none; }
+    .app-bottom-nav { display:flex; position:fixed; bottom:0; left:0; right:0; background:var(--bg2); border-top:1px solid var(--line); z-index:20; overflow-x:auto; padding:8px 6px; gap:4px; }
+    .app-bottom-nav .item { flex-shrink:0; display:flex; flex-direction:column; align-items:center; gap:3px; padding:6px 12px; border-radius:8px; color:var(--ink3); font-size:8.5px; font-family:'JetBrains Mono',monospace; letter-spacing:.03em; text-transform:uppercase; cursor:pointer; }
+    .app-bottom-nav .item.on { color:var(--gold); }
+    .app-main { padding:20px 16px 90px; }
+    .hub-grid { grid-template-columns:1fr; }
+    .grid-4 { grid-template-columns:1fr 1fr; }
+  }
+</style>
+</head>
+<body>
+<div id="root"></div>
+
+<script type="text/babel" data-presets="react">
+const { useState, useEffect, useMemo } = React;
+
+/* ---------------- persistencia ---------------- */
+const STORAGE_KEY = "pagan-life-planner-data-v1";
+
+const BOOK_SECTIONS = [
+  ["resumen","Resumen / Visión general","book"],
+  ["hechizos-rituales","Hechizos y Rituales","flame"],
+  ["hierbas-usos","Hierbas y Usos","leaf"],
+  ["pociones-aceites","Pociones y Aceites","flask"],
+  ["cristales","Cristales","gem"],
+  ["sigilos","Sigilos","star"],
+  ["elementos","Elementos","sun"],
+  ["correspondencias","Correspondencias","grid"],
+  ["terminos-etica","Términos del Oficio y Ética","scroll"],
+  ["altar","Altar","candle"],
+];
+
+const MOON_PHASE_ORDER = ["new","waxing-crescent","first-quarter","waxing-gibbous","full","waning-gibbous","last-quarter","waning-crescent"];
+const MOON_PHASE_LABELS = {
+  "new":"Luna Nueva", "waxing-crescent":"Luna Creciente", "first-quarter":"Cuarto Creciente",
+  "waxing-gibbous":"Luna Gibosa Creciente", "full":"Luna Llena", "waning-gibbous":"Luna Gibosa Menguante",
+  "last-quarter":"Cuarto Menguante", "waning-crescent":"Luna Menguante",
+};
+const MOON_EXTRA_SECTIONS = [
+  ["intenciones-luna-nueva","Intenciones de Luna Nueva"],
+  ["ritual-luna-llena","Ritual de Luna Llena"],
+  ["notas-eclipse","Notas de Eclipse Lunar"],
+  ["lunas-del-año","Lunas del Año"],
+  ["recetas-lunares","Recetas Lunares"],
+];
+
+function emptyPage(){ return { id:"pg"+Date.now()+Math.random().toString(16).slice(2), title:"", body:"", date: todayKey() }; }
+
+function loadState(){
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (raw) return JSON.parse(raw);
+  } catch(e){ console.warn("No se pudo leer localStorage", e); }
+
+  const bookSections = {};
+  BOOK_SECTIONS.forEach(([id]) => { bookSections[id] = [emptyPage()]; });
+
+  const moonSections = {};
+  MOON_PHASE_ORDER.forEach(id => { moonSections[id] = [emptyPage()]; });
+  MOON_EXTRA_SECTIONS.forEach(([id]) => { moonSections[id] = [emptyPage()]; });
+
+  return {
+    book: { sections: bookSections },
+    moon: { sections: moonSections },
+  };
+}
+
+function useStore(){
+  const [state, setState] = useState(loadState);
+  useEffect(() => {
+    try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }
+    catch(e){ console.warn("No se pudo guardar en localStorage", e); }
+  }, [state]);
+  return [state, setState];
+}
+
+function todayKey(){ return new Date().toISOString().slice(0,10); }
+
+/* ---------------- cálculo de fase lunar ---------------- */
+function moonPhaseValue(date){
+  const synodic = 29.530588853;
+  const knownNewMoon = Date.UTC(2000,0,6,18,14,0);
+  const diffDays = (date.getTime() - knownNewMoon) / 86400000;
+  let phase = (diffDays % synodic) / synodic;
+  if (phase < 0) phase += 1;
+  return phase;
+}
+function moonPhaseKey(date){
+  const phase = moonPhaseValue(date);
+  const idx = Math.floor(phase*8 + 0.5) % 8;
+  return MOON_PHASE_ORDER[idx];
+}
+
+/* ---------------- iconos ---------------- */
+const ICON_PATHS = {
+  home:"M2 8 L8 2.5 L14 8 M4 6.5 V13.5 H12 V6.5",
+  book:"M2.5 3 C4 2.3 6.2 2.3 8 3.2 C9.8 2.3 12 2.3 13.5 3 V12.5 C12 11.8 9.8 11.8 8 12.7 C6.2 11.8 4 11.8 2.5 12.5 Z M8 3.2 V12.7",
+  moon:"M13 9.3 A5.6 5.6 0 1 1 6.7 3 A4.6 4.6 0 0 0 13 9.3 Z",
+  leaf:"M3 13 C3 6 8 2.5 13.5 2.5 C13.5 8.5 9.5 13 3 13 Z M3.2 12.8 L9.5 6.3",
+  flame:"M8 14 C5 14 3.5 12 3.5 9.8 C3.5 7.8 4.8 6.5 5 4.8 C6 6 6.3 6.8 6.3 6.8 C6.3 6.8 6.5 4 8.3 2 C8 4.5 9.5 5.5 10.3 7.2 C10.8 8.2 11.5 8.7 11.5 9.8 C11.5 12 10 14 8 14 Z",
+  flask:"M6.5 2 H9.5 M7 2 V6.2 L4.2 11.8 A2 2 0 0 0 6 14.8 H10 A2 2 0 0 0 11.8 11.8 L9 6.2 V2 M5.3 10 H10.7",
+  gem:"M4 6 L8 2 L12 6 L8 14 Z M4 6 H12 M6 6 L8 14 M10 6 L8 14",
+  star:"M8 1.5 L9.7 6 L14.5 6.2 L10.8 9.2 L12 13.8 L8 11.1 L4 13.8 L5.2 9.2 L1.5 6.2 L6.3 6 Z",
+  sun:"M8 8 m-3 0 a3 3 0 1 0 6 0 a3 3 0 1 0 -6 0 M8 1.5 V3 M8 13 V14.5 M1.5 8 H3 M13 8 H14.5 M3.4 3.4 L4.4 4.4 M11.6 11.6 L12.6 12.6 M3.4 12.6 L4.4 11.6 M11.6 4.4 L12.6 3.4",
+  grid:"M2 2 H7 V7 H2 Z M9 2 H14 V7 H9 Z M2 9 H7 V14 H2 Z M9 9 H14 V14 H9 Z",
+  scroll:"M3 3 H11 A2 2 0 0 1 13 5 V13 H5 A2 2 0 0 1 3 11 Z M13 5 A2 2 0 0 0 11 3 M5.5 6.5 H10.5 M5.5 9 H10.5",
+  candle:"M6.5 14.5 H9.5 M7.3 14.5 V6.5 H8.7 V14.5 M7.3 6.5 A0.7 0.7 0 0 1 8.7 6.5 M8 4.3 C7.4 3.4 8 2.5 8 2.5 C8 2.5 8.6 3.4 8 4.3 Z",
+  target:"M8 8 m-6 0 a6 6 0 1 0 12 0 a6 6 0 1 0 -12 0 M8 8 m-3.2 0 a3.2 3.2 0 1 0 6.4 0 a3.2 3.2 0 1 0 -6.4 0 M8 8 m-0.6 0 a0.6 0.6 0 1 0 1.2 0 a0.6 0.6 0 1 0 -1.2 0",
+  plus:"M8 2.5 V13.5 M2.5 8 H13.5",
+  arrowR:"M3 8 H13 M9 4 L13 8 L9 12",
+  arrowL:"M13 8 H3 M7 4 L3 8 L7 12",
+  chart:"M2.5 13.5 H13.5 M4.5 13 V8.5 M8 13 V5 M11.5 13 V9.5",
+  note:"M3 2.5 H13 V13.5 H3 Z M5 5.5 H11 M5 8 H11 M5 10.5 H9",
+  cal:"M2.5 3.5 H13.5 V13 H2.5 Z M2.5 6 H13.5 M5 2 V4.5 M11 2 V4.5",
+};
+function Icon({ name, size=14, color="currentColor", stroke=1.2 }){
+  return <svg width={size} height={size} viewBox="0 0 16 16" fill="none"><path d={ICON_PATHS[name]||ICON_PATHS.star} stroke={color} strokeWidth={stroke} strokeLinecap="round" strokeLinejoin="round"/></svg>;
+}
+
+function MoonIcon({ phase, size=18, light="#EDE4D2", dark="#161310", outline="#8C8275" }){
+  const R = 6.3, top = 8-R, bot = 8+R;
+  const halfRight = `M8,${top} A${R},${R} 0 0 1 8,${bot} Z`;
+  const halfLeft = `M8,${top} A${R},${R} 0 0 0 8,${bot} Z`;
+  const lensRight = `M8,${top} A${R},${R} 0 0 1 8,${bot} A3.2,${R} 0 0 0 8,${top} Z`;
+  const lensLeft = `M8,${top} A${R},${R} 0 0 0 8,${bot} A3.2,${R} 0 0 1 8,${top} Z`;
+  let content;
+  if (phase==="new") content = <circle cx="8" cy="8" r={R} fill="none" stroke={outline} strokeWidth="1"/>;
+  else if (phase==="full") content = <circle cx="8" cy="8" r={R} fill={light}/>;
+  else if (phase==="first-quarter") content = <><circle cx="8" cy="8" r={R} fill="none" stroke={outline} strokeWidth="0.6"/><path d={halfRight} fill={light}/></>;
+  else if (phase==="last-quarter") content = <><circle cx="8" cy="8" r={R} fill="none" stroke={outline} strokeWidth="0.6"/><path d={halfLeft} fill={light}/></>;
+  else if (phase==="waxing-crescent") content = <><circle cx="8" cy="8" r={R} fill="none" stroke={outline} strokeWidth="0.6"/><path d={lensRight} fill={light}/></>;
+  else if (phase==="waning-crescent") content = <><circle cx="8" cy="8" r={R} fill="none" stroke={outline} strokeWidth="0.6"/><path d={lensLeft} fill={light}/></>;
+  else if (phase==="waxing-gibbous") content = <><circle cx="8" cy="8" r={R} fill={light}/><path d={lensLeft} fill={dark}/></>;
+  else if (phase==="waning-gibbous") content = <><circle cx="8" cy="8" r={R} fill={light}/><path d={lensRight} fill={dark}/></>;
+  else content = <circle cx="8" cy="8" r={R} fill={light}/>;
+  return <svg width={size} height={size} viewBox="0 0 16 16">{content}</svg>;
+}
+
+/* ---------------- Libro genérico (usado por Libro de las Sombras y La Luna) ---------------- */
+function GrimoireBook({ pages, setPages, label }){
+  const [idx, setIdx] = useState(Math.max(0, pages.length-1));
+  useEffect(() => { setIdx(Math.max(0, pages.length-1)); }, [label]);
+
+  const page = pages[idx] || emptyPage();
+
+  function update(patch){
+    setPages(pages.map((p,i) => i!==idx ? p : {...p, ...patch}));
+  }
+  function addPage(){
+    setPages([...pages, emptyPage()]);
+    setIdx(pages.length);
+  }
+  function deletePage(){
+    if (pages.length<=1) return;
+    const np = pages.filter((_,i)=>i!==idx);
+    setPages(np);
+    setIdx(Math.max(0, idx-1));
+  }
+
+  return (
+    <div>
+      <div className="book-page">
+        <div className="book-date">{page.date}</div>
+        <input className="book-title-input" placeholder="Título de la página…" value={page.title}
+          onChange={e=>update({title:e.target.value})}/>
+        <textarea className="book-body-area" placeholder="Escribe aquí…" value={page.body}
+          onChange={e=>update({body:e.target.value})}/>
+        <div className="book-page-num">Página {idx+1} de {pages.length}</div>
+      </div>
+      <div className="book-controls">
+        <button className="btn sm" disabled={idx===0} onClick={()=>setIdx(idx-1)}><Icon name="arrowL" size={12}/></button>
+        <button className="btn sm danger" disabled={pages.length<=1} onClick={deletePage}>Eliminar página</button>
+        <button className="btn primary sm" onClick={addPage}><Icon name="plus" size={11}/> Nueva página</button>
+        <button className="btn sm" disabled={idx>=pages.length-1} onClick={()=>setIdx(idx+1)}><Icon name="arrowR" size={12}/></button>
+      </div>
+    </div>
+  );
+}
+
+/* ---------------- Libro de las Sombras ---------------- */
+function BookHub({ state, setState, openSection }){
+  return (
+    <div className="hub-grid">
+      {BOOK_SECTIONS.map(([id,label,icon]) => (
+        <div key={id} className="hub-card" onClick={()=>openSection(id)}>
+          <div className="ic"><Icon name={icon} size={18} stroke={1.1}/></div>
+          <div className="n">{label}</div>
+          <div className="cnt">{state.book.sections[id].length} página(s)</div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function BookSection({ state, setState, sectionId, onBack }){
+  const label = BOOK_SECTIONS.find(s=>s[0]===sectionId)[1];
+  function setPages(pages){
+    setState(s => ({...s, book:{sections:{...s.book.sections, [sectionId]: pages}}}));
+  }
+  return (
+    <div>
+      <div className="book-toolbar">
+        <div className="crumb" onClick={onBack}><Icon name="arrowL" size={11}/> Libro de las Sombras</div>
+      </div>
+      <div style={{fontFamily:"'Cormorant Garamond',serif", fontStyle:"italic", fontSize:20, color:"var(--ink)", marginBottom:14}}>{label}</div>
+      <GrimoireBook pages={state.book.sections[sectionId]} setPages={setPages} label={sectionId}/>
+    </div>
+  );
+}
+
+/* ---------------- La Luna ---------------- */
+function MoonHub({ state, setState, openMoonSection }){
+  const today = new Date();
+  const todayPhase = moonPhaseKey(today);
+
+  const [viewMonth, setViewMonth] = useState(new Date(today.getFullYear(), today.getMonth(), 1));
+  const monthLabel = viewMonth.toLocaleDateString('es-ES', {month:'long', year:'numeric'});
+
+  const daysInMonth = new Date(viewMonth.getFullYear(), viewMonth.getMonth()+1, 0).getDate();
+  const firstWeekday = (viewMonth.getDay()+6)%7; // lunes=0
+
+  return (
+    <div>
+      <div className="card">
+        <h3><span className="t"><Icon name="moon" color="var(--gold)"/>Hoy</span></h3>
+        <div className="moon-today">
+          <MoonIcon phase={todayPhase} size={44}/>
+          <div>
+            <div className="name">{MOON_PHASE_LABELS[todayPhase]}</div>
+            <div className="sub">{today.toLocaleDateString('es-ES', {weekday:'long', day:'numeric', month:'long'})}</div>
+          </div>
+        </div>
+      </div>
+
+      <div className="card">
+        <h3>
+          <span className="t"><Icon name="cal" color="var(--gold)"/>Calendario lunar</span>
+          <span style={{display:"flex", gap:6}}>
+            <button className="btn sm" onClick={()=>setViewMonth(new Date(viewMonth.getFullYear(), viewMonth.getMonth()-1, 1))}><Icon name="arrowL" size={11}/></button>
+            <button className="btn sm" onClick={()=>setViewMonth(new Date(viewMonth.getFullYear(), viewMonth.getMonth()+1, 1))}><Icon name="arrowR" size={11}/></button>
+          </span>
+        </h3>
+        <div style={{fontFamily:"'JetBrains Mono',monospace", fontSize:10, color:"var(--ink3)", textTransform:"uppercase", letterSpacing:".05em", marginBottom:8}}>{monthLabel}</div>
+        <div className="cal-grid-m">
+          {["L","M","M","J","V","S","D"].map((d,i)=><div key={i} className="cal-head-m">{d}</div>)}
+          {Array.from({length:firstWeekday}).map((_,i)=><div key={"e"+i} className="cal-day-m empty"></div>)}
+          {Array.from({length:daysInMonth}).map((_,i) => {
+            const d = new Date(viewMonth.getFullYear(), viewMonth.getMonth(), i+1);
+            const phase = moonPhaseKey(d);
+            const isToday = d.toDateString()===today.toDateString();
+            return (
+              <div key={i} className={"cal-day-m"+(isToday?" today":"")} onClick={()=>openMoonSection(phase)} title={MOON_PHASE_LABELS[phase]}>
+                <MoonIcon phase={phase} size={16}/>
+                <span className="n">{i+1}</span>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+
+      <div className="card">
+        <h3><span className="t">Fases y trabajos mágicos</span></h3>
+        <div className="moon-phase-strip">
+          {MOON_PHASE_ORDER.map(p => (
+            <div key={p} className="p" onClick={()=>openMoonSection(p)}>
+              <MoonIcon phase={p} size={26}/>
+              <div className="lbl">{MOON_PHASE_LABELS[p]}</div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      <div className="card">
+        <h3><span className="t">Rituales y registros</span></h3>
+        <div className="moon-links">
+          {MOON_EXTRA_SECTIONS.map(([id,label]) => (
+            <div key={id} className="r" onClick={()=>openMoonSection(id)}>
+              {label}
+              <Icon name="arrowR" size={12} color="var(--ink3)"/>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function MoonSection({ state, setState, sectionId, onBack }){
+  const label = MOON_PHASE_LABELS[sectionId] || (MOON_EXTRA_SECTIONS.find(s=>s[0]===sectionId)||[,sectionId])[1];
+  function setPages(pages){
+    setState(s => ({...s, moon:{sections:{...s.moon.sections, [sectionId]: pages}}}));
+  }
+  return (
+    <div>
+      <div className="book-toolbar">
+        <div className="crumb" onClick={onBack}><Icon name="arrowL" size={11}/> La Luna</div>
+      </div>
+      <div style={{display:"flex", alignItems:"center", gap:10, marginBottom:14}}>
+        {MOON_PHASE_ORDER.includes(sectionId) && <MoonIcon phase={sectionId} size={22}/>}
+        <div style={{fontFamily:"'Cormorant Garamond',serif", fontStyle:"italic", fontSize:20, color:"var(--ink)"}}>{label}</div>
+      </div>
+      <GrimoireBook pages={state.moon.sections[sectionId]} setPages={setPages} label={sectionId}/>
+    </div>
+  );
+}
+
+/* ---------------- Inicio ---------------- */
+function Home({ state, go }){
+  const today = new Date();
+  const todayPhase = moonPhaseKey(today);
+  const totalBookPages = Object.values(state.book.sections).reduce((a,p)=>a+p.filter(x=>x.title||x.body).length,0);
+  const totalMoonPages = Object.values(state.moon.sections).reduce((a,p)=>a+p.filter(x=>x.title||x.body).length,0);
+
+  return (
+    <div>
+      <div className="card">
+        <h3><span className="t"><Icon name="moon" color="var(--gold)"/>Fase lunar de hoy</span></h3>
+        <div className="moon-today">
+          <MoonIcon phase={todayPhase} size={48}/>
+          <div>
+            <div className="name">{MOON_PHASE_LABELS[todayPhase]}</div>
+            <div className="sub">{today.toLocaleDateString('es-ES', {weekday:'long', day:'numeric', month:'long'})}</div>
+          </div>
+        </div>
+      </div>
+      <div className="grid-4">
+        <div className="stat"><div className="v">{totalBookPages}</div><div className="l">Págs. del libro</div></div>
+        <div className="stat"><div className="v">{totalMoonPages}</div><div className="l">Págs. lunares</div></div>
+        <div className="stat"><div className="v">{BOOK_SECTIONS.length}</div><div className="l">Secciones</div></div>
+        <div className="stat"><div className="v">8</div><div className="l">Fases lunares</div></div>
+      </div>
+      <div style={{display:"grid", gridTemplateColumns:"1fr 1fr", gap:16, marginTop:16}}>
+        <div className="card" style={{cursor:"pointer"}} onClick={()=>go("book")}>
+          <h3><span className="t"><Icon name="book" color="var(--gold)"/>Libro de las Sombras</span></h3>
+          <p style={{fontSize:12, color:"var(--ink2)", lineHeight:1.6}}>Hechizos, hierbas, cristales, sigilos y más — tu grimorio personal.</p>
+        </div>
+        <div className="card" style={{cursor:"pointer"}} onClick={()=>go("moon")}>
+          <h3><span className="t"><Icon name="moon" color="var(--gold)"/>La Luna</span></h3>
+          <p style={{fontSize:12, color:"var(--ink2)", lineHeight:1.6}}>Calendario lunar, fases y trabajos mágicos asociados a cada una.</p>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ---------------- Nav / App ---------------- */
+const TOP_SECTIONS = [
+  {id:"home", label:"Inicio", icon:"home"},
+  {id:"book", label:"Libro de las Sombras", icon:"book"},
+  {id:"moon", label:"La Luna", icon:"moon"},
+];
+const SOON_SECTIONS = [
+  "Rueda del Año","Adivinación y Percepción","Protección y Enraizamiento","Boticario",
+  "Sombra y Autocuidado","Manifestación y Visión","Productividad","Planificador Anual",
+  "Gestión de Vida","Finanzas",
+];
+
+function App(){
+  const [state, setState] = useStore();
+  const [section, setSection] = useState("home");
+  const [bookOpen, setBookOpen] = useState(null);
+  const [moonOpen, setMoonOpen] = useState(null);
+
+  useEffect(() => {
+    if ("serviceWorker" in navigator && location.protocol.startsWith("http")) {
+      navigator.serviceWorker.register("service-worker.js").catch(()=>{});
+    }
+  }, []);
+
+  function go(id){
+    setSection(id);
+    setBookOpen(null);
+    setMoonOpen(null);
+  }
+
+  const activeLabel = TOP_SECTIONS.find(s=>s.id===section)?.label || "";
+
+  return (
+    <div className="app-shell">
+      <div className="app-nav">
+        <div className="brand-row">
+          <Icon name="star" size={16} color="var(--gold)"/>
+          <div className="brand">Pagan Life Planner</div>
+        </div>
+        <div className="tag">Fase 1 · grimorio</div>
+        {TOP_SECTIONS.map(s => (
+          <div key={s.id} className={"item"+(section===s.id?" on":"")} onClick={()=>go(s.id)}>
+            <Icon name={s.icon} size={13}/>{s.label}
+          </div>
+        ))}
+        <div className="group-label">Próximamente</div>
+        {SOON_SECTIONS.map(s => <div key={s} className="item soon"><Icon name="star" size={11}/>{s}</div>)}
+      </div>
+
+      <div className="app-main">
+        <div className="app-topbar">
+          <h1>{activeLabel}</h1>
+          <div className="date">{new Date().toLocaleDateString('es-ES', {weekday:'long', day:'numeric', month:'long'})}</div>
+        </div>
+
+        {section==="home" && <Home state={state} go={go}/>}
+
+        {section==="book" && !bookOpen && <BookHub state={state} setState={setState} openSection={setBookOpen}/>}
+        {section==="book" && bookOpen && <BookSection state={state} setState={setState} sectionId={bookOpen} onBack={()=>setBookOpen(null)}/>}
+
+        {section==="moon" && !moonOpen && <MoonHub state={state} setState={setState} openMoonSection={setMoonOpen}/>}
+        {section==="moon" && moonOpen && <MoonSection state={state} setState={setState} sectionId={moonOpen} onBack={()=>setMoonOpen(null)}/>}
+      </div>
+
+      <div className="app-bottom-nav">
+        {TOP_SECTIONS.map(s => (
+          <div key={s.id} className={"item"+(section===s.id?" on":"")} onClick={()=>go(s.id)}>
+            <Icon name={s.icon} size={15}/>{s.label}
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById("root")).render(<App/>);
+</script>
+</body>
+</html>
