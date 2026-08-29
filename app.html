@@ -140,6 +140,53 @@
   .dream-symbols input:focus { outline:none; border-bottom-color:var(--accent); }
   .dream-symbols input::placeholder { color:var(--ink3); font-style:italic; }
 
+  .vision-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:8px; margin-bottom:14px; }
+  .vision-tile { position:relative; aspect-ratio:1; border-radius:8px; overflow:hidden; border:1px solid var(--line); background:var(--bg2); }
+  .vision-tile img { width:100%; height:100%; object-fit:cover; display:block; }
+  .vision-tile .rm { position:absolute; top:4px; right:4px; width:20px; height:20px; border-radius:50%; background:rgba(0,0,0,.55); color:#EDE4D2; border:none; font-size:12px; cursor:pointer; display:flex; align-items:center; justify-content:center; }
+  .vision-add { aspect-ratio:1; border-radius:8px; border:1px dashed var(--line); display:flex; flex-direction:column; align-items:center; justify-content:center; gap:6px; color:var(--ink3); cursor:pointer; }
+  .vision-add:hover { border-color:var(--accent); color:var(--accent); }
+  .vision-add input { display:none; }
+  .vision-add .lbl { font-family:'JetBrains Mono',monospace; font-size:8px; letter-spacing:.04em; text-transform:uppercase; }
+
+  input.text-input, textarea.text-input {
+    width:100%; background:transparent; border:1px solid var(--line); border-radius:7px; color:var(--ink);
+    font-family:'Manrope',sans-serif; font-size:12.5px; padding:8px 10px;
+  }
+  input.text-input:focus, textarea.text-input:focus { outline:none; border-color:var(--accent); }
+  input.text-input::placeholder, textarea.text-input::placeholder { color:var(--ink3); font-style:italic; }
+
+  .row-cb { display:flex; align-items:center; gap:9px; padding:8px 0; border-bottom:1px solid var(--lineSoft); font-size:12.5px; }
+  .row-cb:last-child { border-bottom:none; }
+  .cb { width:16px; height:16px; border:1.3px solid var(--ink3); border-radius:4px; flex-shrink:0; cursor:pointer; display:flex; align-items:center; justify-content:center; font-size:10px; color:#211B15; }
+  .cb.on { background:var(--gold); border-color:var(--gold); }
+  .del-btn { background:none; border:none; color:var(--ink3); cursor:pointer; font-size:13px; }
+  .empty { font-size:11.5px; color:var(--ink3); font-style:italic; padding:8px 0; }
+  .add-row { display:flex; gap:8px; margin-top:10px; }
+  .add-row input { flex:1; }
+
+  .proj { border:1px solid var(--line); border-radius:10px; padding:13px 15px; margin-bottom:10px; }
+  .proj .top { display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; }
+  .proj .name { font-family:'Cormorant Garamond',serif; font-style:italic; font-size:15px; color:var(--ink); }
+  .proj .pct { font-family:'JetBrains Mono',monospace; font-size:11px; color:var(--gold); }
+  .proj .bar { height:6px; background:var(--lineSoft); border-radius:4px; overflow:hidden; }
+  .proj .bar i { display:block; height:100%; background:var(--accent); }
+  .proj .slider { width:100%; margin-top:8px; }
+
+  .week-row { display:flex; align-items:center; gap:8px; padding:7px 0; border-bottom:1px solid var(--lineSoft); font-size:11.5px; }
+  .week-row:last-child { border-bottom:none; }
+  .week-row .d { font-family:'JetBrains Mono',monospace; font-size:9.5px; color:var(--ink3); width:34px; flex-shrink:0; }
+  .week-row input { flex:1; background:transparent; border:none; border-bottom:1px solid var(--lineSoft); color:var(--ink2); font-family:'Manrope',sans-serif; font-size:12px; padding:4px 0; }
+  .week-row input:focus { outline:none; border-bottom-color:var(--accent); }
+
+  .fin-summary { display:grid; grid-template-columns:1fr 1fr 1fr; gap:10px; margin-bottom:14px; }
+  .fin-list-item { display:grid; grid-template-columns: 74px 1fr 92px 70px 22px; gap:8px; align-items:center; padding:7px 0; border-bottom:1px solid var(--lineSoft); font-size:11.5px; }
+  .fin-list-item .amt.income { color:#A8B895; }
+  .fin-list-item .amt.expense { color:#D2A99A; }
+
+  .quarter-grid { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+  .quarter-grid textarea { min-height:90px; }
+
   .app-bottom-nav { display:none; }
   @media (max-width: 860px) {
     .app-nav { display:none; }
@@ -243,9 +290,22 @@ const SHADOW_SECTIONS = [
   ["reflexion-mensual","Reflexión Mensual","cal","plain"],
 ];
 
+// las secciones de texto de Manifestación y Visión (el Tablero de Visión se maneja aparte, con imágenes)
+const MANIFESTATION_SECTIONS = [
+  ["matriz-manifestacion","Matriz de Manifestación","grid","tagged","Deseo / intención","ej. abundancia, claridad, amor propio"],
+  ["hechizos-objetivos","Planificador de Hechizos por Objetivos","target","tagged","Objetivo","ej. protección, prosperidad, sanación"],
+  ["activacion-sigilos","Registro de Activación de Sigilos","star","tagged","Sigilo activado","ej. nombre o descripción, método de activación"],
+  ["boveda-inspiracion","Bóveda de Inspiración","book","tagged","Fuente","ej. libro, cuenta, persona"],
+];
+
 function emptyPage(){ return { id:"pg"+Date.now()+Math.random().toString(16).slice(2), title:"", body:"", date: todayKey() }; }
 function emptySigilPage(){ return { id:"sg"+Date.now()+Math.random().toString(16).slice(2), title:"", note:"", image:null, date: todayKey() }; }
 function emptyDreamPage(){ return { id:"dr"+Date.now()+Math.random().toString(16).slice(2), title:"", body:"", date: todayKey(), mood:"", lucid:false, symbols:"" }; }
+function emptyVisionPage(){ return { id:"vb"+Date.now()+Math.random().toString(16).slice(2), title:"", note:"", images:[], date: todayKey() }; }
+function newId(prefix){ return prefix+Date.now()+Math.random().toString(16).slice(2); }
+
+const WEEKDAYS = ["Lun","Mar","Mié","Jue","Vie","Sáb","Dom"];
+function emptyMeals(){ const m={}; WEEKDAYS.forEach(d=>m[d]=""); return m; }
 
 function buildDefaultWheelSections(){
   const wheelSections = {};
@@ -277,6 +337,12 @@ function buildDefaultShadowSections(){
   return sections;
 }
 
+function buildDefaultManifestationSections(){
+  const sections = {};
+  MANIFESTATION_SECTIONS.forEach(([id]) => { sections[id] = [emptyPage()]; });
+  return sections;
+}
+
 function loadState(){
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
@@ -303,6 +369,22 @@ function loadState(){
       if (!parsed.apothecary) { parsed.apothecary = { sections: buildDefaultApothecarySections() }; }
       // migración: agrega Sombra y Autocuidado si el dato guardado es de antes de esta fase
       if (!parsed.shadow) { parsed.shadow = { sections: buildDefaultShadowSections() }; }
+      // migración: agrega Manifestación y Visión si el dato guardado es de antes de esta fase
+      if (!parsed.manifestation) { parsed.manifestation = { sections: buildDefaultManifestationSections() }; }
+      if (!parsed.visionBoard) { parsed.visionBoard = { pages: [emptyVisionPage()] }; }
+      // migración: agrega Productividad, Planificador Anual, Gestión de Vida y Finanzas si faltan
+      if (!parsed.productivity) {
+        parsed.productivity = { projects:[], tasks:[], focus:"", ideas:[], timelog:[] };
+      }
+      if (!parsed.yearly) {
+        parsed.yearly = { word:"", goals:[], keyDates:[], quarters:["","","",""], summary:"" };
+      }
+      if (!parsed.lifeManagement) {
+        parsed.lifeManagement = { habits:[], meals: emptyMeals(), groceries:[], homeTasks:[], wishlist:[] };
+      }
+      if (!parsed.finance) {
+        parsed.finance = { entries:[] };
+      }
       return parsed;
     }
   } catch(e){ console.warn("No se pudo leer localStorage", e); }
@@ -324,6 +406,12 @@ function loadState(){
     protection: { sections: buildDefaultProtectionSections() },
     apothecary: { sections: buildDefaultApothecarySections() },
     shadow: { sections: buildDefaultShadowSections() },
+    manifestation: { sections: buildDefaultManifestationSections() },
+    visionBoard: { pages: [emptyVisionPage()] },
+    productivity: { projects:[], tasks:[], focus:"", ideas:[], timelog:[] },
+    yearly: { word:"", goals:[], keyDates:[], quarters:["","","",""], summary:"" },
+    lifeManagement: { habits:[], meals: emptyMeals(), groceries:[], homeTasks:[], wishlist:[] },
+    finance: { entries:[] },
   };
 }
 
@@ -383,6 +471,7 @@ const ICON_PATHS = {
   shield:"M8 2 L13 4 V8 C13 11.5 10.8 13.3 8 14 C5.2 13.3 3 11.5 3 8 V4 Z M6 8 L7.4 9.4 L10.3 6.3",
   coin:"M8 8 m-5.5 0 a5.5 5.5 0 1 0 11 0 a5.5 5.5 0 1 0 -11 0 M8 5 V11 M6.3 9.7 C6.3 10.6 7 11 8 11 C9.3 11 9.9 10.4 9.9 9.7 C9.9 8 6.1 8.9 6.1 7.2 C6.1 6.5 6.7 6 8 6 C8.8 6 9.5 6.3 9.7 6.9",
   flower:"M8 8 m-1.6 0 a1.6 1.6 0 1 0 3.2 0 a1.6 1.6 0 1 0 -3.2 0 M8 4 a2 2 0 1 1 0.01 0 M11.5 6 a2 2 0 1 1 -0.01 0 M11.5 10.2 a2 2 0 1 1 -0.01 0 M8 12.2 a2 2 0 1 1 0.01 0 M4.5 10.2 a2 2 0 1 1 0.01 0 M4.5 6 a2 2 0 1 1 0.01 0",
+  image:"M2.5 3 H13.5 V13 H2.5 Z M2.5 10 L6 6.5 L9 9.5 L11 7.5 L13.5 10 M5.5 6 m-1 0 a1 1 0 1 0 2 0 a1 1 0 1 0 -2 0",
   lotus:"M8 8 m-1.6 0 a1.6 1.6 0 1 0 3.2 0 a1.6 1.6 0 1 0 -3.2 0 M8 4 a2 2 0 1 1 0.01 0 M11.5 6 a2 2 0 1 1 -0.01 0 M11.5 10.2 a2 2 0 1 1 -0.01 0 M8 12.2 a2 2 0 1 1 0.01 0 M4.5 10.2 a2 2 0 1 1 0.01 0 M4.5 6 a2 2 0 1 1 0.01 0",
 };
 function Icon({ name, size=14, color="currentColor", stroke=1.2 }){
@@ -937,6 +1026,450 @@ function ShadowSection({ state, setState, sectionId, onBack }){
   );
 }
 
+/* ---------------- Tablero de Visión ---------------- */
+function resizeImageFile(file, maxDim=700, quality=0.75){
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const img = new Image();
+      img.onload = () => {
+        let w = img.width, h = img.height;
+        if (w > h && w > maxDim) { h = Math.round(h*maxDim/w); w = maxDim; }
+        else if (h > maxDim) { w = Math.round(w*maxDim/h); h = maxDim; }
+        const canvas = document.createElement("canvas");
+        canvas.width = w; canvas.height = h;
+        canvas.getContext("2d").drawImage(img, 0, 0, w, h);
+        resolve(canvas.toDataURL("image/jpeg", quality));
+      };
+      img.onerror = reject;
+      img.src = e.target.result;
+    };
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+}
+
+function VisionBoard({ pages, setPages }){
+  const [idx, setIdx] = useState(Math.max(0, pages.length-1));
+  const page = pages[idx] || emptyVisionPage();
+
+  function update(patch){ setPages(pages.map((p,i)=> i!==idx ? p : {...p, ...patch})); }
+  function addPage(){ setPages([...pages, emptyVisionPage()]); setIdx(pages.length); }
+  function deletePage(){
+    if (pages.length<=1) return;
+    const np = pages.filter((_,i)=>i!==idx);
+    setPages(np);
+    setIdx(Math.max(0, idx-1));
+  }
+  async function onFiles(e){
+    const files = Array.from(e.target.files || []);
+    if (!files.length) return;
+    const resized = await Promise.all(files.map(f => resizeImageFile(f)));
+    update({ images: [...page.images, ...resized] });
+    e.target.value = "";
+  }
+  function removeImage(i){
+    update({ images: page.images.filter((_,ii)=>ii!==i) });
+  }
+
+  return (
+    <div>
+      <div className="book-page">
+        <div className="book-date">{page.date}</div>
+        <input className="book-title-input" placeholder="Título del tablero…" value={page.title}
+          onChange={e=>update({title:e.target.value})}/>
+        <div className="vision-grid">
+          {page.images.map((img,i) => (
+            <div key={i} className="vision-tile">
+              <img src={img} alt=""/>
+              <button className="rm" onClick={()=>removeImage(i)}>✕</button>
+            </div>
+          ))}
+          <label className="vision-add">
+            <Icon name="plus" size={18}/>
+            <span className="lbl">Agregar fotos</span>
+            <input type="file" accept="image/*" multiple onChange={onFiles}/>
+          </label>
+        </div>
+        <textarea className="book-body-area" style={{minHeight:80}} placeholder="Notas sobre esta visión…"
+          value={page.note} onChange={e=>update({note:e.target.value})}/>
+        <div className="book-page-num">Página {idx+1} de {pages.length}</div>
+      </div>
+      <div className="book-controls">
+        <button className="btn sm" disabled={idx===0} onClick={()=>setIdx(idx-1)}><Icon name="arrowL" size={12}/></button>
+        <button className="btn sm danger" disabled={pages.length<=1} onClick={deletePage}>Eliminar página</button>
+        <button className="btn primary sm" onClick={addPage}><Icon name="plus" size={11}/> Nuevo tablero</button>
+        <button className="btn sm" disabled={idx>=pages.length-1} onClick={()=>setIdx(idx+1)}><Icon name="arrowR" size={12}/></button>
+      </div>
+    </div>
+  );
+}
+
+/* ---------------- Manifestación y Visión ---------------- */
+function ManifestationHub({ state, openManifestationSection }){
+  return (
+    <div className="hub-grid">
+      <div className="hub-card" onClick={()=>openManifestationSection("tablero-vision")}>
+        <div className="ic"><Icon name="image" size={18} stroke={1.1}/></div>
+        <div className="n">Tablero de Visión</div>
+        <div className="cnt">{state.visionBoard.pages.length} página(s)</div>
+      </div>
+      {MANIFESTATION_SECTIONS.map(([id,label,icon]) => (
+        <div key={id} className="hub-card" onClick={()=>openManifestationSection(id)}>
+          <div className="ic"><Icon name={icon} size={18} stroke={1.1}/></div>
+          <div className="n">{label}</div>
+          <div className="cnt">{state.manifestation.sections[id].length} página(s)</div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function ManifestationSection({ state, setState, sectionId, onBack }){
+  if (sectionId === "tablero-vision") {
+    return (
+      <div>
+        <div className="book-toolbar">
+          <div className="crumb" onClick={onBack}><Icon name="arrowL" size={11}/> Manifestación y Visión</div>
+        </div>
+        <div style={{fontFamily:"'Cormorant Garamond',serif", fontStyle:"italic", fontSize:20, color:"var(--ink)", marginBottom:14}}>Tablero de Visión</div>
+        <VisionBoard pages={state.visionBoard.pages} setPages={(pages)=>setState(s=>({...s, visionBoard:{pages}}))}/>
+      </div>
+    );
+  }
+  const info = MANIFESTATION_SECTIONS.find(s=>s[0]===sectionId);
+  const [,label,,type,tagLabel,tagPlaceholder] = info;
+  function setPages(pages){
+    setState(s => ({...s, manifestation:{sections:{...s.manifestation.sections, [sectionId]: pages}}}));
+  }
+  return (
+    <div>
+      <div className="book-toolbar">
+        <div className="crumb" onClick={onBack}><Icon name="arrowL" size={11}/> Manifestación y Visión</div>
+      </div>
+      <div style={{fontFamily:"'Cormorant Garamond',serif", fontStyle:"italic", fontSize:20, color:"var(--ink)", marginBottom:14}}>{label}</div>
+      <GrimoireBook pages={state.manifestation.sections[sectionId]} setPages={setPages} label={sectionId}
+        tagLabel={type==="tagged" ? tagLabel : null} tagPlaceholder={tagPlaceholder}/>
+    </div>
+  );
+}
+
+/* ---------------- Lista de tareas reutilizable ---------------- */
+function ChecklistWidget({ items, setItems, placeholder }){
+  const [text, setText] = useState("");
+  function add(){
+    if (!text.trim()) return;
+    setItems([...items, {id:newId("ck"), text:text.trim(), done:false}]);
+    setText("");
+  }
+  function toggle(id){ setItems(items.map(i=>i.id!==id?i:{...i, done:!i.done})); }
+  function remove(id){ setItems(items.filter(i=>i.id!==id)); }
+  return (
+    <div>
+      {items.map(i => (
+        <div key={i.id} className="row-cb">
+          <span className={"cb"+(i.done?" on":"")} onClick={()=>toggle(i.id)}>{i.done?"✓":""}</span>
+          <span style={{flex:1, cursor:"pointer", textDecoration:i.done?"line-through":"none", color:i.done?"var(--ink3)":"var(--ink2)"}} onClick={()=>toggle(i.id)}>{i.text}</span>
+          <button className="del-btn" onClick={()=>remove(i.id)}>✕</button>
+        </div>
+      ))}
+      {items.length===0 && <div className="empty">Nada por aquí todavía.</div>}
+      <div className="add-row">
+        <input className="text-input" placeholder={placeholder} value={text} onChange={e=>setText(e.target.value)} onKeyDown={e=>e.key==="Enter"&&add()}/>
+        <button className="btn sm" onClick={add}>Añadir</button>
+      </div>
+    </div>
+  );
+}
+
+/* ---------------- Productividad ---------------- */
+function Productivity({ state, setState }){
+  const p = state.productivity;
+  function patch(patch){ setState(s => ({...s, productivity:{...s.productivity, ...patch}})); }
+
+  const [projName, setProjName] = useState("");
+  function addProject(){
+    if (!projName.trim()) return;
+    patch({ projects:[...p.projects, {id:newId("pj"), name:projName.trim(), pct:0}] });
+    setProjName("");
+  }
+  function setProjectPct(id, pct){ patch({ projects: p.projects.map(pr=>pr.id!==id?pr:{...pr, pct:Number(pct)}) }); }
+  function removeProject(id){ patch({ projects: p.projects.filter(pr=>pr.id!==id) }); }
+
+  const [logForm, setLogForm] = useState({project:"", minutes:""});
+  function addLog(){
+    if (!logForm.minutes) return;
+    patch({ timelog:[{id:newId("tl"), date:todayKey(), ...logForm}, ...p.timelog] });
+    setLogForm({project:"", minutes:""});
+  }
+  function removeLog(id){ patch({ timelog: p.timelog.filter(l=>l.id!==id) }); }
+
+  return (
+    <div>
+      <div className="card">
+        <h3><span className="t"><Icon name="target" color="var(--gold)"/>Mi enfoque</span></h3>
+        <input className="text-input" placeholder="¿Cuál es tu foco ahora mismo?" value={p.focus} onChange={e=>patch({focus:e.target.value})}/>
+      </div>
+
+      <div className="card">
+        <h3><span className="t"><Icon name="chart" color="var(--gold)"/>Proyectos</span></h3>
+        {p.projects.map(pr => (
+          <div key={pr.id} className="proj">
+            <div className="top">
+              <span className="name">{pr.name}</span>
+              <span style={{display:"flex", alignItems:"center", gap:8}}>
+                <span className="pct">{pr.pct}%</span>
+                <button className="del-btn" onClick={()=>removeProject(pr.id)}>✕</button>
+              </span>
+            </div>
+            <div className="bar"><i style={{width:pr.pct+"%"}}></i></div>
+            <input className="slider" type="range" min="0" max="100" value={pr.pct} onChange={e=>setProjectPct(pr.id, e.target.value)}/>
+          </div>
+        ))}
+        {p.projects.length===0 && <div className="empty">Añade tu primer proyecto abajo.</div>}
+        <div className="add-row">
+          <input className="text-input" placeholder="Nuevo proyecto" value={projName} onChange={e=>setProjName(e.target.value)} onKeyDown={e=>e.key==="Enter"&&addProject()}/>
+          <button className="btn sm" onClick={addProject}>Añadir</button>
+        </div>
+      </div>
+
+      <div className="card">
+        <h3><span className="t"><Icon name="check" color="var(--gold)"/>Tareas</span></h3>
+        <ChecklistWidget items={p.tasks} setItems={(tasks)=>patch({tasks})} placeholder="Nueva tarea"/>
+      </div>
+
+      <div className="card">
+        <h3><span className="t"><Icon name="star" color="var(--gold)"/>Ideas</span></h3>
+        <ChecklistWidget items={p.ideas} setItems={(ideas)=>patch({ideas})} placeholder="Nueva idea"/>
+      </div>
+
+      <div className="card">
+        <h3><span className="t"><Icon name="cal" color="var(--gold)"/>Registro de tiempo</span></h3>
+        {p.timelog.map(l => (
+          <div key={l.id} className="row-cb">
+            <span style={{fontFamily:"'JetBrains Mono',monospace", fontSize:10, color:"var(--ink3)", width:70}}>{l.date}</span>
+            <span style={{flex:1}}>{l.project||"—"}</span>
+            <span style={{fontFamily:"'JetBrains Mono',monospace", fontSize:11, color:"var(--gold)"}}>{l.minutes} min</span>
+            <button className="del-btn" onClick={()=>removeLog(l.id)}>✕</button>
+          </div>
+        ))}
+        {p.timelog.length===0 && <div className="empty">Registra tu primera sesión de trabajo.</div>}
+        <div className="add-row">
+          <input className="text-input" placeholder="Proyecto" value={logForm.project} onChange={e=>setLogForm({...logForm, project:e.target.value})}/>
+          <input className="text-input" type="number" placeholder="Minutos" style={{maxWidth:100}} value={logForm.minutes} onChange={e=>setLogForm({...logForm, minutes:e.target.value})}/>
+          <button className="btn sm" onClick={addLog}>Registrar</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ---------------- Planificador Anual ---------------- */
+function YearlyPlanner({ state, setState }){
+  const y = state.yearly;
+  function patch(patch){ setState(s => ({...s, yearly:{...s.yearly, ...patch}})); }
+
+  const [dateForm, setDateForm] = useState({label:"", date:""});
+  function addDate(){
+    if (!dateForm.label.trim()) return;
+    patch({ keyDates:[...y.keyDates, {id:newId("kd"), ...dateForm}] });
+    setDateForm({label:"", date:""});
+  }
+  function removeDate(id){ patch({ keyDates: y.keyDates.filter(d=>d.id!==id) }); }
+  function setQuarter(i, val){
+    const qs = [...y.quarters]; qs[i] = val; patch({ quarters: qs });
+  }
+
+  return (
+    <div>
+      <div className="card">
+        <h3><span className="t"><Icon name="star" color="var(--gold)"/>Palabra del año</span></h3>
+        <input className="text-input" placeholder="Una palabra que guíe tu año…" value={y.word} onChange={e=>patch({word:e.target.value})}/>
+      </div>
+
+      <div className="card">
+        <h3><span className="t"><Icon name="target" color="var(--gold)"/>Objetivos</span></h3>
+        <ChecklistWidget items={y.goals} setItems={(goals)=>patch({goals})} placeholder="Nuevo objetivo"/>
+      </div>
+
+      <div className="card">
+        <h3><span className="t"><Icon name="cal" color="var(--gold)"/>Fechas clave</span></h3>
+        {y.keyDates.map(d => (
+          <div key={d.id} className="row-cb">
+            <span style={{fontFamily:"'JetBrains Mono',monospace", fontSize:10, color:"var(--ink3)", width:80}}>{d.date||"—"}</span>
+            <span style={{flex:1}}>{d.label}</span>
+            <button className="del-btn" onClick={()=>removeDate(d.id)}>✕</button>
+          </div>
+        ))}
+        {y.keyDates.length===0 && <div className="empty">Añade una fecha importante.</div>}
+        <div className="add-row">
+          <input className="text-input" placeholder="Descripción" value={dateForm.label} onChange={e=>setDateForm({...dateForm, label:e.target.value})}/>
+          <input className="text-input" type="date" style={{maxWidth:150}} value={dateForm.date} onChange={e=>setDateForm({...dateForm, date:e.target.value})}/>
+          <button className="btn sm" onClick={addDate}>Añadir</button>
+        </div>
+      </div>
+
+      <div className="card">
+        <h3><span className="t"><Icon name="wheel" color="var(--gold)"/>Revisión trimestral</span></h3>
+        <div className="quarter-grid">
+          {["Q1","Q2","Q3","Q4"].map((q,i) => (
+            <div key={q}>
+              <label style={{fontFamily:"'JetBrains Mono',monospace", fontSize:8.5, letterSpacing:".06em", textTransform:"uppercase", color:"var(--ink3)", display:"block", marginBottom:5}}>{q}</label>
+              <textarea className="text-input" value={y.quarters[i]} onChange={e=>setQuarter(i, e.target.value)} placeholder={"Notas de "+q+"…"}/>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      <div className="card">
+        <h3><span className="t"><Icon name="moon" color="var(--gold)"/>Resumen mágico</span></h3>
+        <textarea className="text-input" style={{minHeight:100}} placeholder="Lo más significativo del año en tu práctica…"
+          value={y.summary} onChange={e=>patch({summary:e.target.value})}/>
+      </div>
+    </div>
+  );
+}
+
+/* ---------------- Gestión de Vida ---------------- */
+function calcStreak(checks){
+  let streak = 0; let d = new Date();
+  while (true) {
+    const key = d.toISOString().slice(0,10);
+    if (checks[key]) { streak++; d.setDate(d.getDate()-1); } else break;
+  }
+  return streak;
+}
+function lastNDays(n){
+  const arr = []; const d = new Date();
+  for (let i=n-1; i>=0; i--) { const dd = new Date(d); dd.setDate(d.getDate()-i); arr.push(dd.toISOString().slice(0,10)); }
+  return arr;
+}
+
+function LifeManagement({ state, setState }){
+  const lm = state.lifeManagement;
+  function patch(patch){ setState(s => ({...s, lifeManagement:{...s.lifeManagement, ...patch}})); }
+
+  const [habitName, setHabitName] = useState("");
+  const days = lastNDays(7);
+  function addHabit(){
+    if (!habitName.trim()) return;
+    patch({ habits:[...lm.habits, {id:newId("hb"), name:habitName.trim(), checks:{}}] });
+    setHabitName("");
+  }
+  function toggleHabit(id, day){
+    patch({ habits: lm.habits.map(h=>h.id!==id?h:{...h, checks:{...h.checks, [day]: !h.checks[day]}}) });
+  }
+  function removeHabit(id){ patch({ habits: lm.habits.filter(h=>h.id!==id) }); }
+
+  return (
+    <div>
+      <div className="card">
+        <h3><span className="t"><Icon name="check" color="var(--gold)"/>Hábitos — últimos 7 días</span></h3>
+        {lm.habits.map(h => (
+          <div key={h.id} className="row-cb" style={{alignItems:"center"}}>
+            <div style={{flex:1}}>
+              <div>{h.name}</div>
+              <div style={{fontFamily:"'JetBrains Mono',monospace", fontSize:9.5, color:"var(--gold)", marginTop:2}}>🔥 {calcStreak(h.checks)} días</div>
+            </div>
+            <div style={{display:"flex", gap:4}}>
+              {days.map(d => (
+                <span key={d} className={"cb"+(h.checks[d]?" on":"")} onClick={()=>toggleHabit(h.id,d)}>{h.checks[d]?"✓":""}</span>
+              ))}
+            </div>
+            <button className="del-btn" onClick={()=>removeHabit(h.id)}>✕</button>
+          </div>
+        ))}
+        {lm.habits.length===0 && <div className="empty">Añade tu primer hábito abajo.</div>}
+        <div className="add-row">
+          <input className="text-input" placeholder="Nuevo hábito" value={habitName} onChange={e=>setHabitName(e.target.value)} onKeyDown={e=>e.key==="Enter"&&addHabit()}/>
+          <button className="btn sm" onClick={addHabit}>Añadir</button>
+        </div>
+      </div>
+
+      <div className="card">
+        <h3><span className="t"><Icon name="cal" color="var(--gold)"/>Plan de comidas</span></h3>
+        {WEEKDAYS.map(d => (
+          <div key={d} className="week-row">
+            <span className="d">{d}</span>
+            <input placeholder="Comida del día…" value={lm.meals[d]||""} onChange={e=>patch({meals:{...lm.meals, [d]:e.target.value}})}/>
+          </div>
+        ))}
+      </div>
+
+      <div className="card">
+        <h3><span className="t"><Icon name="grid" color="var(--gold)"/>Compras</span></h3>
+        <ChecklistWidget items={lm.groceries} setItems={(groceries)=>patch({groceries})} placeholder="Añadir a la lista"/>
+      </div>
+
+      <div className="card">
+        <h3><span className="t"><Icon name="home" color="var(--gold)"/>Tareas del hogar</span></h3>
+        <ChecklistWidget items={lm.homeTasks} setItems={(homeTasks)=>patch({homeTasks})} placeholder="Nueva tarea del hogar"/>
+      </div>
+
+      <div className="card">
+        <h3><span className="t"><Icon name="star" color="var(--gold)"/>Lista de deseos</span></h3>
+        <ChecklistWidget items={lm.wishlist} setItems={(wishlist)=>patch({wishlist})} placeholder="Nuevo deseo"/>
+      </div>
+    </div>
+  );
+}
+
+/* ---------------- Finanzas ---------------- */
+const FIN_CATS = ["Vivienda","Alimentación","Herramientas y suministros","Transporte","Salud","Ocio","Ahorro","Otros"];
+
+function Finance({ state, setState }){
+  const entries = state.finance.entries;
+  function setEntries(entries){ setState(s => ({...s, finance:{entries}})); }
+
+  const [form, setForm] = useState({desc:"", cat:"Otros", amount:"", type:"expense"});
+  const income = entries.filter(e=>e.type==="income").reduce((a,e)=>a+Number(e.amount||0),0);
+  const expense = entries.filter(e=>e.type==="expense").reduce((a,e)=>a+Number(e.amount||0),0);
+
+  function addEntry(){
+    if (!form.desc.trim() || !form.amount) return;
+    setEntries([{id:newId("fn"), date:todayKey(), ...form, amount:Number(form.amount)}, ...entries]);
+    setForm({desc:"", cat:"Otros", amount:"", type:"expense"});
+  }
+  function removeEntry(id){ setEntries(entries.filter(e=>e.id!==id)); }
+
+  return (
+    <div>
+      <div className="card">
+        <div className="fin-summary">
+          <div className="stat"><div className="v">{income.toFixed(0)}</div><div className="l">Entra</div></div>
+          <div className="stat"><div className="v">{expense.toFixed(0)}</div><div className="l">Sale</div></div>
+          <div className="stat"><div className="v">{(income-expense).toFixed(0)}</div><div className="l">Queda</div></div>
+        </div>
+        <div className="add-row" style={{flexWrap:"wrap"}}>
+          <input className="text-input" placeholder="Descripción" value={form.desc} onChange={e=>setForm({...form, desc:e.target.value})}/>
+          <select className="text-input" style={{maxWidth:160}} value={form.cat} onChange={e=>setForm({...form, cat:e.target.value})}>
+            {FIN_CATS.map(c=><option key={c}>{c}</option>)}
+          </select>
+          <input className="text-input" type="number" placeholder="Importe" style={{maxWidth:100}} value={form.amount} onChange={e=>setForm({...form, amount:e.target.value})}/>
+          <select className="text-input" style={{maxWidth:100}} value={form.type} onChange={e=>setForm({...form, type:e.target.value})}>
+            <option value="expense">Sale</option>
+            <option value="income">Entra</option>
+          </select>
+          <button className="btn sm" onClick={addEntry}>Añadir</button>
+        </div>
+      </div>
+      <div className="card">
+        <h3><span className="t">Ledger</span></h3>
+        {entries.length===0 && <div className="empty">Todavía no hay movimientos registrados.</div>}
+        {entries.map(e => (
+          <div key={e.id} className="fin-list-item">
+            <span style={{fontFamily:"'JetBrains Mono',monospace", fontSize:10, color:"var(--ink3)"}}>{e.date}</span>
+            <span>{e.desc}</span>
+            <span style={{fontSize:10.5, color:"var(--ink3)"}}>{e.cat}</span>
+            <span className={"amt "+e.type}>{e.type==="income"?"+":"−"}{e.amount}</span>
+            <button className="del-btn" onClick={()=>removeEntry(e.id)}>✕</button>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 /* ---------------- Inicio ---------------- */
 function nextSabbat(){
   const today = new Date();
@@ -1023,6 +1556,26 @@ function Home({ state, go }){
           <h3><span className="t"><Icon name="flower" color="var(--gold)"/>Sombra y Autocuidado</span></h3>
           <p style={{fontSize:12, color:"var(--ink2)", lineHeight:1.6}}>Trabajo de sombra, gratitud, afirmaciones y reflexión mensual.</p>
         </div>
+        <div className="card" style={{cursor:"pointer"}} onClick={()=>go("manifestation")}>
+          <h3><span className="t"><Icon name="image" color="var(--gold)"/>Manifestación y Visión</span></h3>
+          <p style={{fontSize:12, color:"var(--ink2)", lineHeight:1.6}}>Tablero de visión con fotos, matriz de manifestación y más.</p>
+        </div>
+        <div className="card" style={{cursor:"pointer"}} onClick={()=>go("productivity")}>
+          <h3><span className="t"><Icon name="chart" color="var(--gold)"/>Productividad</span></h3>
+          <p style={{fontSize:12, color:"var(--ink2)", lineHeight:1.6}}>Proyectos, tareas, ideas y registro de tiempo de trabajo.</p>
+        </div>
+        <div className="card" style={{cursor:"pointer"}} onClick={()=>go("yearly")}>
+          <h3><span className="t"><Icon name="cal" color="var(--gold)"/>Planificador Anual</span></h3>
+          <p style={{fontSize:12, color:"var(--ink2)", lineHeight:1.6}}>Palabra del año, objetivos, fechas clave y revisión trimestral.</p>
+        </div>
+        <div className="card" style={{cursor:"pointer"}} onClick={()=>go("lifeManagement")}>
+          <h3><span className="t"><Icon name="leaf" color="var(--gold)"/>Gestión de Vida</span></h3>
+          <p style={{fontSize:12, color:"var(--ink2)", lineHeight:1.6}}>Hábitos, comidas, compras, tareas del hogar y deseos.</p>
+        </div>
+        <div className="card" style={{cursor:"pointer"}} onClick={()=>go("finance")}>
+          <h3><span className="t"><Icon name="coin" color="var(--gold)"/>Finanzas</span></h3>
+          <p style={{fontSize:12, color:"var(--ink2)", lineHeight:1.6}}>Entra, sale, queda — y el registro completo de movimientos.</p>
+        </div>
       </div>
     </div>
   );
@@ -1039,11 +1592,13 @@ const TOP_SECTIONS = [
   {id:"protection", label:"Protección y Enraizamiento", icon:"shield"},
   {id:"apothecary", label:"Boticario", icon:"flask"},
   {id:"shadow", label:"Sombra y Autocuidado", icon:"flower"},
+  {id:"manifestation", label:"Manifestación y Visión", icon:"image"},
+  {id:"productivity", label:"Productividad", icon:"chart"},
+  {id:"yearly", label:"Planificador Anual", icon:"cal"},
+  {id:"lifeManagement", label:"Gestión de Vida", icon:"leaf"},
+  {id:"finance", label:"Finanzas", icon:"coin"},
 ];
-const SOON_SECTIONS = [
-  "Manifestación y Visión","Productividad","Planificador Anual",
-  "Gestión de Vida","Finanzas",
-];
+const SOON_SECTIONS = [];
 
 function App(){
   const [state, setState] = useStore();
@@ -1055,6 +1610,7 @@ function App(){
   const [protectionOpen, setProtectionOpen] = useState(null);
   const [apothecaryOpen, setApothecaryOpen] = useState(null);
   const [shadowOpen, setShadowOpen] = useState(null);
+  const [manifestationOpen, setManifestationOpen] = useState(null);
 
   useEffect(() => {
     if ("serviceWorker" in navigator && location.protocol.startsWith("http")) {
@@ -1071,6 +1627,7 @@ function App(){
     setProtectionOpen(null);
     setApothecaryOpen(null);
     setShadowOpen(null);
+    setManifestationOpen(null);
   }
 
   const activeLabel = TOP_SECTIONS.find(s=>s.id===section)?.label || "";
@@ -1082,13 +1639,13 @@ function App(){
           <Icon name="star" size={16} color="var(--gold)"/>
           <div className="brand">Pagan Life Planner</div>
         </div>
-        <div className="tag">Fase 7 · grimorio</div>
+        <div className="tag">Grimorio completo</div>
         {TOP_SECTIONS.map(s => (
           <div key={s.id} className={"item"+(section===s.id?" on":"")} onClick={()=>go(s.id)}>
             <Icon name={s.icon} size={13}/>{s.label}
           </div>
         ))}
-        <div className="group-label">Próximamente</div>
+        {SOON_SECTIONS.length > 0 && <div className="group-label">Próximamente</div>}
         {SOON_SECTIONS.map(s => <div key={s} className="item soon"><Icon name="star" size={11}/>{s}</div>)}
       </div>
 
@@ -1123,6 +1680,14 @@ function App(){
 
         {section==="shadow" && !shadowOpen && <ShadowHub state={state} openShadowSection={setShadowOpen}/>}
         {section==="shadow" && shadowOpen && <ShadowSection state={state} setState={setState} sectionId={shadowOpen} onBack={()=>setShadowOpen(null)}/>}
+
+        {section==="manifestation" && !manifestationOpen && <ManifestationHub state={state} openManifestationSection={setManifestationOpen}/>}
+        {section==="manifestation" && manifestationOpen && <ManifestationSection state={state} setState={setState} sectionId={manifestationOpen} onBack={()=>setManifestationOpen(null)}/>}
+
+        {section==="productivity" && <Productivity state={state} setState={setState}/>}
+        {section==="yearly" && <YearlyPlanner state={state} setState={setState}/>}
+        {section==="lifeManagement" && <LifeManagement state={state} setState={setState}/>}
+        {section==="finance" && <Finance state={state} setState={setState}/>}
       </div>
 
       <div className="app-bottom-nav">
